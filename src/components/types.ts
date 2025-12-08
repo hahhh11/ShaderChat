@@ -1,0 +1,35 @@
+export interface UniformValue {
+  value: number | { x: number; y: number; z?: number };
+}
+
+export interface Uniforms {
+  [key: string]: UniformValue;
+  iTime: { value: number };
+  iResolution: { value: { x: number; y: number } };
+}
+
+export interface Message {
+  text: string;
+  sender: 'assistant' | 'user';
+}
+
+export interface CodeEditorProps {
+  id: string;
+  defaultValue: string;
+  onChange: (value: string) => void;
+}
+
+export interface ShaderMaterialProps {
+  uniforms: Uniforms;
+  vertexShader: string;
+  fragmentShader: string;
+}
+
+export interface ChatDrawerProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  messages: Message[];
+  onSendMessage: (message: string) => void;
+  inputMessage: string;
+  setInputMessage: (value: string) => void;
+}

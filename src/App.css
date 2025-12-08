@@ -1,0 +1,1178 @@
+/* 基础设置 */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+    background-color: #1e1e1e; /* 深色背景 */
+    color: #e0e0e0; 
+    scroll-behavior: smooth;
+}
+
+body.resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+body.resizing {
+  cursor: col-resize !important;
+}
+
+/* 导航栏样式 */
+.navigation-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background-color: #2c2c2c;
+    border-bottom: 1px solid #444;
+    height: 50px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.nav-brand h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #f0f0f0;
+    letter-spacing: 0.5px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 8px;
+}
+
+.nav-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.nav-btn {
+    background: none;
+    border: 1px solid #555;
+    color: #e0e0e0;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.nav-btn:hover {
+    background-color: #3c3c3c;
+    border-color: #666;
+}
+
+.nav-btn.primary {
+    background-color: #007acc;
+    border-color: #007acc;
+    color: white;
+}
+
+.nav-btn.primary:hover {
+    background-color: #005a9e;
+    border-color: #005a9e;
+}
+
+/* 主容器，使用flex布局管理所有内容 */
+#main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* 应用容器，占据导航栏下方的剩余空间 */
+#app-container {
+    display: flex;
+    flex-grow: 1;
+    overflow: hidden;
+    height: calc(100vh - 50px); /* 减去导航栏高度 */
+}
+
+/* 核心区域过渡效果 */
+#editor-panel,
+#preview-container,
+#preview-panel,
+#controls-panel {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 控制面板切换按钮 */
+.controls-toggle-btn {
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    margin: 0;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    opacity: 0.8;
+    position: relative;
+    z-index: 20; /* 确保按钮在控制面板之上 */
+}
+
+.controls-toggle-btn:hover {
+    opacity: 1;
+    background-color: rgba(255, 255, 255, 0.1);
+    transform: scale(1.1);
+}
+
+.controls-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.controls-toggle-btn.active {
+    color: #4CAF50; /* 激活状态颜色 */
+}
+
+/* 面板通用样式 */
+.panel-header {
+    padding: 10px 15px;
+    background-color: #2c2c2c; /* 头部背景 */
+    border-bottom: 1px solid #444; 
+    font-size: 13px;
+    color: #f0f0f0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    flex-shrink: 0; /* 防止头部被压缩 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header:hover {
+    background-color: #333;
+}
+
+/* 折叠按钮样式 */
+.collapse-btn {
+    float: right;
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    margin: 0;
+    transition: all 0.2s ease;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+}
+
+.collapse-btn:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.collapse-btn.collapsed::before {
+    content: '+';
+}
+
+.collapse-btn:not(.collapsed)::before {
+    content: '-';
+}
+
+/* 左侧编辑器面板 */
+#editor-panel {
+    background: #1e1e1e;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: width 0.1s ease-out; /* 优化过渡效果 */
+    min-width: 300px;
+    max-width: 800px;
+    will-change: width; /* 优化性能 */
+}
+
+.resizable-divider {
+  width: 4px;
+  background: #333;
+  cursor: col-resize;
+  position: relative;
+  transition: background-color 0.2s ease;
+  z-index: 1000;
+}
+
+.resizable-divider:hover {
+  background: #555;
+}
+
+.resizable-divider.dragging {
+  background: #007acc;
+}
+
+.resizable-divider::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background: transparent;
+}
+
+/* Ace 编辑器容器 */
+#editor-vs, #editor-fs {
+    flex-shrink: 0;
+    line-height: 1.5;
+    background-color: #1e1e1e;
+    /* 仅在 VS 和 FS 之间保留分隔 */
+    border-bottom: 1px solid #333; 
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative; /* 确保编辑器正确包含 */
+}
+
+/* 默认状态下的比例 */
+#editor-vs {
+    flex: 0 0 30%; /* VS 占 30% 高度 */
+    min-height: 120px; /* 最小高度确保可用 */
+    max-height: 50%; /* 最大高度防止过度占用 */
+}
+
+#editor-fs {
+    flex: 1 1 70%; /* FS 占剩余 70% 高度 */
+    border-bottom: none; /* 底部不需要分隔 */
+    min-height: 200px; /* 最小高度确保可用 */
+}
+
+/* 折叠状态 */
+#editor-panel.collapsed-vs #editor-vs {
+    flex: 0 0 0px !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    border-bottom: none;
+    overflow: hidden;
+}
+
+#editor-panel.collapsed-fs #editor-fs {
+    flex: 0 0 0px !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden;
+}
+
+/* 确保编辑器在拖动时正常工作 */
+#editor-panel {
+  position: relative;
+}
+
+/* 拖动时的全局样式 */
+body.resizing {
+  cursor: col-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+body.resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* 拖动条优化样式 */
+.resizable-divider {
+  width: 4px;
+  background: #333;
+  cursor: col-resize;
+  position: relative;
+  transition: background-color 0.2s ease;
+  z-index: 1000;
+  flex-shrink: 0;
+  will-change: background-color; /* 优化性能 */
+}
+
+.resizable-divider:hover {
+  background: #555;
+}
+
+.resizable-divider.dragging {
+  background: #007acc;
+  transition: none; /* 拖动时禁用过渡效果 */
+}
+
+.resizable-divider::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 12px;
+  background: transparent;
+  cursor: col-resize;
+}
+
+.resizable-divider::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 2px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 1px;
+}
+
+#editor-panel.collapsed-vs.collapsed-fs #editor-vs, 
+#editor-panel.collapsed-vs.collapsed-fs #editor-fs {
+    flex: 0 0 0px !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden;
+}
+
+/* 预览容器，包含预览面板和控制面板 */
+#preview-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    position: relative;
+}
+
+/* 3D预览面板 */
+#preview-panel {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+    position: relative;
+}
+
+#shader-canvas {
+    width: 100%;
+    height: calc(100% - 41px); /* 减去面板头部高度 */
+    display: block;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8); /* 增加深度感 */
+    transition: all 0.3s ease;
+    border-radius: 2px;
+    margin: 2px;
+    position: relative;
+    overflow: hidden; /* Prevent content overflow */
+}
+
+/* Canvas 样式修复 */
+#shader-canvas canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+}
+
+/* Ace 编辑器样式修复 */
+#editor-vs .ace_editor,
+#editor-fs .ace_editor {
+    width: 100% !important;
+    height: 100% !important;
+    position: absolute !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* 控制面板 - 放到3D Preview内部 */
+#controls-panel {
+    background: rgba(37, 37, 37, 0.95);
+    border: 1px solid #444;
+    border-radius: 8px 0 0 8px;
+    overflow: auto;
+    flex-shrink: 0;
+    width: 280px; /* 减小宽度 */
+    max-height: 400px; /* 最大高度 */
+    position: absolute;
+    top: 98px; /* 放在标题栏下方 */
+    right: 0px; /* 距离右边20px */
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+    pointer-events: none;
+    backdrop-filter: blur(10px); /* 毛玻璃效果 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 12px; /* 内边距 */
+    scrollbar-width: thin; /* 滚动条样式 */
+    scrollbar-color: #444 #252525;
+}
+
+#controls-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#controls-panel::-webkit-scrollbar-track {
+    background: #252525;
+    border-radius: 3px;
+}
+
+#controls-panel::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+}
+
+#controls-panel::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+#controls-panel.visible {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+}
+
+#controls-panel.hidden {
+    opacity: 0;
+    transform: translateX(20px) scale(0.95);
+    pointer-events: none;
+}
+
+#controls-panel .panel-header {
+    border-bottom: 1px solid #444;
+    background-color: #2c2c2c;
+}
+
+/* Uniforms 控制区 */
+#uniforms-controls {
+    padding: 8px 0; /* 减小内边距 */
+    background: transparent;
+    min-height: 120px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* 减小间距 */
+    transition: all 0.3s ease;
+    flex-grow: 1;
+    overflow-x: hidden;
+}
+
+/* 滚动条样式 */
+#uniforms-controls::-webkit-scrollbar {
+    width: 6px;
+}
+
+#uniforms-controls::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 3px;
+    margin: 2px 0;
+}
+
+#uniforms-controls::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+#uniforms-controls::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.uniform-control {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 12px; /* 减小内边距 */
+    margin: 0 0 12px 0; /* 减小底部间距 */
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    gap: 6px; /* 减小间距 */
+}
+
+.uniform-control:hover {
+    transform: translateY(-2px);
+    background: rgba(0, 122, 204, 0.05);
+    border-color: rgba(0, 122, 204, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.15);
+}
+
+.uniform-control label {
+    font-size: 13px;
+    color: #9cb3c9; /* 强调色 */
+    margin: 0 0 6px 0; /* 减小底部间距 */
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    transition: all 0.3s ease;
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.uniform-control:hover label {
+    color: #007acc;
+}
+
+/* 包含滑块和值的容器 */
+.uniform-control > div {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-grow: 1;
+    width: 100%;
+    min-width: 0;
+}
+
+/* 滑块样式 */
+.uniform-control input[type="range"] {
+    -webkit-appearance: none; 
+    flex-grow: 1;
+    height: 4px;
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+    margin: 0;
+}
+
+.uniform-control input[type="range"]::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: var(--progress, 0%);
+    background: linear-gradient(to right, #007acc 0%, #0099ff 100%);
+    border-radius: 2px;
+    transition: all 0.1s ease;
+    box-shadow: 0 0 6px rgba(0, 122, 204, 0.5);
+}
+
+.uniform-control input[type="range"]:hover {
+    background: #444;
+}
+
+/* WebKit 滑块拇指 */
+.uniform-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.uniform-control input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    border-color: #fff;
+}
+
+.uniform-control input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.7),
+                inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Firefox 滑块拇指 */
+.uniform-control input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    cursor: pointer;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.3),
+                inset 0 1px 1px rgba(255, 255, 255, 0.2);
+    position: relative;
+    z-index: 1;
+}
+
+.uniform-control input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.3);
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.6),
+                inset 0 1px 1px rgba(255, 255, 255, 0.4);
+    border-color: #fff;
+}
+
+.uniform-control input[type="range"]::-moz-range-thumb:active {
+    transform: scale(1.2);
+    box-shadow: 0 1px 4px rgba(0, 122, 204, 0.7),
+                inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Firefox 进度条 */
+.uniform-control input[type="range"]::-moz-range-progress {
+    background: linear-gradient(to right, #007acc 0%, #0099ff 100%);
+    height: 100%;
+    border-radius: 2px;
+    box-shadow: 0 0 6px rgba(0, 122, 204, 0.5);
+}
+
+/* 数值显示样式 */
+.uniform-control span {
+    font-weight: 600;
+    font-size: 12px;
+    color: #fff;
+    width: 45px;
+    text-align: center;
+    min-width: 45px;
+    background: #333;
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    letter-spacing: 0.3px;
+}
+
+.uniform-control:hover span {
+    background: #007acc;
+    border-color: rgba(255, 255, 255, 0.3);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2),
+                0 1px 4px rgba(0, 122, 204, 0.3);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    /* 在窄屏设备上，控制面板宽度调整为250px */
+    #controls-panel {
+        width: 250px;
+    }
+    
+    /* 调整输入框和数值显示的大小 */
+    .uniform-control span {
+        font-size: 11px;
+        padding: 5px 8px;
+        width: 40px;
+    }
+}
+
+@media (max-width: 768px) {
+    /* 在移动设备上，预览容器垂直排列 */
+    #preview-container {
+        flex-direction: column;
+        min-width: auto;
+    }
+    
+    /* 控制面板宽度100%，高度自适应 */
+    #controls-panel {
+        width: 100%;
+        height: 200px;
+        border-left: none;
+        border-top: 1px solid #444;
+    }
+    
+    /* 调整uniform控制区的间距 */
+    #uniforms-controls {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    /* 调整控制项的内边距 */
+    .uniform-control {
+        padding: 10px 12px;
+    }
+}
+
+/* 抽屉式对话框容器 - 浮在上方 */
+#chat-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    overflow: visible;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 抽屉开关按钮 - 半透明磨砂效果，固定在右下角 */
+.chat-toggle-btn {
+    width: auto;
+    padding: 10px 16px;
+    background: rgba(0, 122, 204, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 1002;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 25px;
+    min-width: auto;
+    max-width: 200px;
+}
+
+.chat-toggle-btn:hover {
+    background: rgba(0, 153, 255, 0.95);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(0, 122, 204, 0.5);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.chat-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.chat-toggle-btn svg {
+    transition: transform 0.3s ease;
+    width: 14px;
+    height: 14px;
+}
+
+/* 对话框样式 - 半透明磨砂效果 */
+#chat-container {
+    height: 300px;
+    background: rgba(37, 37, 38, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    z-index: 1001;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(100%);
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: hidden;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+/* 展开状态 */
+#chat-drawer.open #chat-container {
+    transform: translateY(0);
+}
+
+#chat-drawer.open .chat-toggle-btn svg {
+    transform: rotate(180deg);
+}
+
+#chat-drawer.open .chat-toggle-btn {
+    bottom: 310px; /* 对话框高度300px + 原始底部间距10px */
+}
+
+/* 消息区域 */
+#chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.5;
+    gap: 15px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* 聊天消息容器 */
+.chat-messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 消息样式 */
+.chat-message {
+    max-width: 85%;
+    padding: 12px 18px;
+    border-radius: 12px;
+    margin-bottom: 0;
+    word-wrap: break-word;
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+/* 消息滑入动画 */
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-message.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message.assistant {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.15);
+    color: #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom-left-radius: 4px;
+}
+
+/* 输入区域 */
+#chat-input-area {
+    padding: 15px 20px 20px;
+    background: rgba(30, 30, 30, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/* 输入框样式 */
+#chat-input {
+    flex-grow: 1;
+    padding: 14px 18px;
+    background: rgba(51, 51, 51, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    min-height: 45px;
+    max-height: 120px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#chat-input:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+    background: rgba(68, 68, 68, 0.9);
+}
+
+#chat-input::placeholder {
+    color: #999;
+}
+
+/* 发送按钮 */
+#send-btn {
+    padding: 14px 22px;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+    align-self: flex-end;
+    min-width: 85px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.5);
+    background: linear-gradient(135deg, #0099ff 0%, #00b3ff 100%);
+}
+
+#send-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.4);
+}
+
+#send-btn:disabled {
+    background: rgba(85, 85, 85, 0.8);
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 对话框滚动条 */
+#chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 4px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+#chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 响应式对话框 */
+@media (max-width: 768px) {
+    #chat-container {
+        height: 250px;
+    }
+    
+    #chat-input-area {
+        padding: 12px 15px 15px;
+    }
+    
+    #chat-messages {
+        padding: 15px;
+    }
+    
+    /* 移动端展开状态下，按钮跟随对话框上移 */
+    #chat-drawer.open .chat-toggle-btn {
+        bottom: 260px; /* 移动端对话框高度250px + 原始底部间距10px */
+    }
+}
+
+/* 设置按钮样式 - 相对于聊天抽屉定位 */
+.chat-settings-btn {
+    position: absolute;
+    bottom: 10px;
+    right: 60px; /* 在聊天按钮左侧 */
+    width: 40px;
+    height: 40px;
+    background: rgba(85, 85, 85, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1002;
+}
+
+.chat-settings-btn:hover {
+    background: rgba(102, 102, 102, 0.95);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.chat-settings-btn:active {
+    transform: translateY(0);
+}
+
+/* 对话框展开时，设置按钮跟随聊天框上移 */
+#chat-drawer.open .chat-settings-btn {
+    bottom: 260px; /* 跟随聊天框上移 */
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+    .chat-settings-btn {
+        bottom: 10px;
+        right: 60px;
+    }
+    
+    /* 移动端对话框展开时，设置按钮跟随上移 */
+    #chat-drawer.open .chat-settings-btn {
+        bottom: 260px; /* 移动端对话框高度250px + 原始底部间距10px */
+    }
+}
+
+/* 设置模态框样式 */
+.settings-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.settings-modal {
+    background: rgba(37, 37, 38, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+.settings-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-modal-header h3 {
+    margin: 0;
+    color: #e0e0e0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.settings-modal-close {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.settings-modal-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(80vh - 140px);
+}
+
+.setting-item {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-item label {
+    font-size: 14px;
+    color: #b0b0b0;
+    font-weight: 500;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #007acc;
+}
+
+.setting-item select {
+    padding: 8px 12px;
+    background: rgba(51, 51, 51, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.setting-item select:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+}
+
+.setting-item span {
+    font-size: 13px;
+    color: #999;
+    margin-left: 8px;
+}
+
+.settings-modal-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.settings-modal-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.settings-modal-btn-primary {
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+}
+
+.settings-modal-btn-primary:hover {
+    background: linear-gradient(135deg, #0099ff 0%, #00b3ff 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(0, 122, 204, 0.5);
+}
+
+.settings-modal-btn-secondary {
+    background: rgba(85, 85, 85, 0.8);
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-modal-btn-secondary:hover {
+    background: rgba(102, 102, 102, 0.9);
+    color: #fff;
+}
