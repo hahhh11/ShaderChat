@@ -36,7 +36,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
   const [language, setLanguage] = useState('zh-CN');
   const [editingModel, setEditingModel] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{show: boolean, model: any | null}>({show: false, model: null});
+  
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -88,16 +88,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
     setIsEditModalOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (deleteConfirm.model) {
-      handleDeleteModel(deleteConfirm.model.id);
-      setDeleteConfirm({show: false, model: null});
-    }
-  };
 
-  const handleDeleteCancel = () => {
-    setDeleteConfirm({show: false, model: null});
-  };
 
   const handleTestModel = async (model: ModelConfig): Promise<boolean> => {
     try {
@@ -368,7 +359,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
         models={models}
         onAddModel={handleAddModel}
         onEditModel={handleEditModel}
-        onDeleteModel={(modelId) => setDeleteConfirm({show: true, model: models.find(m => m.id === modelId) || null})}
+        onDeleteModel={handleDeleteModel}
         onTestModel={handleTestModel}
       />
       {/* 编辑模型模态框 */}
@@ -379,28 +370,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
         onUpdateModel={handleUpdateModel}
       />
 
-      {/* 删除确认对话框 */}
-      {deleteConfirm.show && deleteConfirm.model && (
-        <div className="delete-confirm-overlay">
-          <div className="delete-confirm-modal">
-            <div className="delete-confirm-header">
-              <h3>确认删除</h3>
-            </div>
-            <div className="delete-confirm-content">
-              <p>确定要删除模型 <strong>"{deleteConfirm.model.name}"</strong> 吗？</p>
-              <p className="delete-warning">此操作无法撤销。</p>
-            </div>
-            <div className="delete-confirm-footer">
-              <button className="settings-modal-btn settings-modal-btn-secondary" onClick={handleDeleteCancel}>
-                取消
-              </button>
-              <button className="settings-modal-btn settings-modal-btn-primary delete-confirm-btn" onClick={handleDeleteConfirm}>
-                删除
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </>
   );
 };

@@ -512,6 +512,21 @@ function App() {
                   fragmentShader={fragmentShader} 
                 />
               </Canvas>
+              
+              {/* 聊天抽屉 - 现在位于shader-canvas内部 */}
+              <ChatDrawer
+                isOpen={isChatOpen}
+                onToggle={() => setIsChatOpen(!isChatOpen)}
+                messages={messages}
+                onSendMessage={sendMessage}
+                inputMessage={inputMessage}
+                setInputMessage={setInputMessage}
+                models={models}
+                setModels={setModels}
+                selectedModel={selectedModel}
+                setSelectedModel={setSelectedModel}
+                onTestModel={handleTestModel}
+              />
             </div>
           </div>
         </div>
@@ -541,20 +556,7 @@ function App() {
         </div>
       </div>
       
-      {/* 聊天抽屉 */}
-      <ChatDrawer
-        isOpen={isChatOpen}
-        onToggle={() => setIsChatOpen(!isChatOpen)}
-        messages={messages}
-        onSendMessage={sendMessage}
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
-        models={models}
-        setModels={setModels}
-        selectedModel={selectedModel}
-        setSelectedModel={setSelectedModel}
-        onTestModel={handleTestModel}
-      />
+
     </div>
   );
 }
