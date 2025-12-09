@@ -1,28 +1,41 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [main]   # 推送到 main 就触发
+    push:
+        branches: [main]
+
+permissions:
+    contents: read
+    pages: write
+    id-token: write
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    build-and-deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: npm   # 如果是 yarn 就写 yarn
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 9
 
-      - name: Install & Build
-        run: |
-          npm ci
-          npm run build      # 这条必须能生成 dist 目录
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: pnpm
+                  cache-dependency-path: pnpm-lock.yaml
 
-      - name: Deploy 🚀
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist   # 把 dist 里的东西推到一个特殊分支 gh-pages
+            - name: Install & Build
+              run: |
+                  pnpm install --frozen-lockfile
+                  pnpm run build
+              env:
+                  BASE_URL: /${{ github.event.repository.name }}/ # 给构建脚本用
+
+            - name: Deploy 🚀
+              uses: peaceiris/actions-gh-pages@v4
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./dist
