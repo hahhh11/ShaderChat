@@ -12,7 +12,8 @@ import {
   defaultVertexShader,
   defaultFragmentShader,
   discoverUniformNames,
-  setupUniforms
+  setupUniforms,
+  useModels
 } from './components';
 import './App.css';
 
@@ -59,9 +60,89 @@ function App() {
   // 时间动画引用
   const animationRef = useRef<number>(0);
   
-  // 模型配置状态
-  const [models, setModels] = useState<ModelConfig[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
+  // 模型配置状态 - 使用useModels Hook
+  const {
+    models,
+    setModels,
+    selectedModel,
+    setSelectedModel
+  } = useModels();
+
+  const handleTestModel = async (model: ModelConfig): Promise<boolean> => {
+    try {
+      console.log('测试模型连接:', model.name);
+      console.log('模型配置详情:', {
+        name: model.name,
+        address: model.address,
+        model: model.model,
+        hasApiKey: !!model.apiKey,
+        apiKeyLength: model.apiKey?.length || 0
+      });
+      
+      // 简单的API测试请求
+      const testMessages = [
+        {
+          role: 'user',
+          content: 'Hello, this is a test message. Please respond with "OK".'
+        }
+      ];
+      
+      const requestBody = {
+        model: model.model,
+        messages: testMessages,
+        temperature: 0.1,
+        max_tokens: 10
+      };
+      
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (model.apiKey) {
+        headers['Authorization'] = `Bearer ${model.apiKey}`;
+      }
+      
+      // 根据模型地址判断API类型并构建正确的URL
+      let apiUrl: string;
+      
+      if (model.address.includes('openai.com')) {
+        // OpenAI API
+        apiUrl = `${model.address}/chat/completions`;
+      } else {
+        // 其他兼容OpenAI API的模型
+        // 检查地址是否已经包含/v1，避免重复添加
+        const baseAddress = model.address.endsWith('/v1') ? model.address : `${model.address}/v1`;
+        apiUrl = `${baseAddress}/chat/completions`;
+      }
+      
+      console.log('测试请求URL:', apiUrl);
+      console.log('请求头:', headers);
+      console.log('请求体:', requestBody);
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(requestBody),
+      });
+      
+      console.log('测试响应状态:', response.status);
+      console.log('测试响应头:', response.headers);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('测试失败，状态码:', response.status, '错误信息:', errorText);
+        return false;
+      }
+      
+      const data = await response.json();
+      console.log('测试响应数据:', data);
+      return true;
+      
+    } catch (error) {
+      console.error('测试模型连接失败:', error);
+      return false;
+    }
+  };
   
 
   
@@ -177,6 +258,15 @@ function App() {
       return;
     }
     
+    // 调试信息：检查模型配置
+    console.log('当前模型配置:', {
+      name: currentModel.name,
+      address: currentModel.address,
+      model: currentModel.model,
+      hasApiKey: !!currentModel.apiKey,
+      apiKeyLength: currentModel.apiKey?.length || 0
+    });
+    
     try {
       // 根据模型地址判断API类型
       let response;
@@ -250,8 +340,24 @@ function App() {
       
     } catch (error) {
       console.error('API调用失败:', error);
+      let errorText = '抱歉，模型调用失败: ';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorText += 'API密钥无效或已过期，请检查模型配置中的API密钥';
+        } else if (error.message.includes('404')) {
+          errorText += 'API地址错误或模型不存在，请检查模型配置';
+        } else if (error.message.includes('NetworkError') || error.message.includes('fetch')) {
+          errorText += '网络连接失败，请检查网络连接和API地址';
+        } else {
+          errorText += error.message;
+        }
+      } else {
+        errorText += '未知错误';
+      }
+      
       const errorMessage: Message = {
-        text: `抱歉，模型调用失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        text: errorText,
         sender: 'assistant' as const
       };
       setMessages([...newMessages, errorMessage]);
@@ -447,6 +553,7 @@ function App() {
         setModels={setModels}
         selectedModel={selectedModel}
         setSelectedModel={setSelectedModel}
+        onTestModel={handleTestModel}
       />
     </div>
   );

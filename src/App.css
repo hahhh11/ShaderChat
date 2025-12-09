@@ -1768,6 +1768,63 @@ body.resizing * {
     opacity: 1;
 }
 
+/* 测试按钮样式 */
+.model-test-btn {
+    background: rgba(0, 122, 204, 0.1);
+    border: 1px solid rgba(0, 122, 204, 0.2);
+    border-radius: 6px;
+    padding: 8px;
+    color: #0099ff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.7;
+    min-width: 32px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.model-test-btn:hover {
+    background: rgba(0, 122, 204, 0.2);
+    border-color: rgba(0, 122, 204, 0.4);
+    color: #00b3ff;
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+}
+
+.model-test-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.15);
+}
+
+.model-test-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.model-test-btn[style*="#4CAF50"] {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border-color: rgba(76, 175, 80, 0.4) !important;
+    color: #4CAF50 !important;
+}
+
+.model-test-btn[style*="#f44336"] {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-color: rgba(244, 67, 54, 0.4) !important;
+    color: #f44336 !important;
+}
+
+.model-list-item:hover .model-test-btn {
+    opacity: 1;
+}
+
 /* 添加模型模态框样式 */
 .add-model-modal {
     background: rgba(30, 30, 30, 0.9);
