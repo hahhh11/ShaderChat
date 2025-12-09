@@ -17,7 +17,6 @@ const ResizableDivider: React.FC<ResizableDividerProps> = ({
   const dividerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef(0);
   const startLeftWidthRef = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();

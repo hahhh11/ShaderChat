@@ -25,6 +25,14 @@ export interface ShaderMaterialProps {
   fragmentShader: string;
 }
 
+export interface ModelConfig {
+  id: string;
+  name: string;
+  address: string;
+  model: string;
+  apiKey: string;
+}
+
 export interface ChatDrawerProps {
   isOpen: boolean;
   onToggle: () => void;
@@ -32,4 +40,8 @@ export interface ChatDrawerProps {
   onSendMessage: (message: string) => void;
   inputMessage: string;
   setInputMessage: (value: string) => void;
+  models: ModelConfig[];
+  setModels: (models: ModelConfig[]) => void;
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
 }

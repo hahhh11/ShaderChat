@@ -45,11 +45,16 @@ export const setupUniforms = (
   if (hasChanges) {
     setCustomUniforms(newCustomUniforms);
     
-    // 更新合并后的Uniforms
+    // 更新合并后的Uniforms - 保留内置uniforms的值
     const mergedUniforms: Uniforms = {
       ...uniforms,
       ...newCustomUniforms
     };
+    
+    // 确保内置uniforms不被覆盖
+    if (uniforms.iTime) mergedUniforms.iTime = uniforms.iTime;
+    if (uniforms.iResolution) mergedUniforms.iResolution = uniforms.iResolution;
+    
     setUniforms(mergedUniforms);
   }
 };

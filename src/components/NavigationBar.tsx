@@ -2,7 +2,7 @@
  * @Author: 98Precent
  * @Date: 2025-12-08 17:34:38
  * @LastEditors: Do not edit
- * @LastEditTime: 2025-12-08 18:23:29
+ * @LastEditTime: 2025-12-09 09:37:32
  * @FilePath: /ShaderChat/src/components/NavigationBar.tsx
  */
 import React from 'react';

@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -19,30 +19,38 @@ interface ShaderMaterialProps {
 }
 
 const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader, fragmentShader }) => {
-  // 使用useRef来存储uniforms引用，避免直接修改props
-  const uniformsRef = useRef(uniforms);
+  // 使用useRef来存储材质引用，避免重复创建
+  const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   
-  // 当uniforms变化时更新引用
-  React.useEffect(() => {
-    uniformsRef.current = uniforms;
-  }, [uniforms]);
-
-  // 使用useFrame钩子在每一帧更新iTime
-  useFrame((state) => {
-    if (uniformsRef.current && uniformsRef.current.iTime) {
-      uniformsRef.current.iTime.value = state.clock.elapsedTime;
-    }
-  });
-
-  // 使用useMemo来创建材质，避免重复创建
+  // 只在vertexShader或fragmentShader变化时重新创建材质
   const material = useMemo(() => {
-    return new THREE.ShaderMaterial({
+    materialRef.current = new THREE.ShaderMaterial({
       uniforms: uniforms,
       vertexShader: vertexShader,
       fragmentShader: fragmentShader,
       side: THREE.DoubleSide
     });
-  }, [uniforms, vertexShader, fragmentShader]);
+    return materialRef.current;
+  }, [vertexShader, fragmentShader]); // 移除uniforms依赖，避免频繁重建
+
+  // 更新uniforms值而不重新创建材质
+  useEffect(() => {
+    if (materialRef.current) {
+      // 只更新变化的uniforms值
+      Object.keys(uniforms).forEach(key => {
+        if (materialRef.current!.uniforms[key]) {
+          materialRef.current!.uniforms[key].value = uniforms[key].value;
+        }
+      });
+    }
+  }, [uniforms]); // 监听uniforms变化，但只更新值不重建材质
+
+  // 使用useFrame钩子在每一帧更新iTime
+  useFrame((state) => {
+    if (materialRef.current && materialRef.current.uniforms.iTime) {
+      materialRef.current.uniforms.iTime.value = state.clock.elapsedTime;
+    }
+  });
 
   return (
     <mesh>

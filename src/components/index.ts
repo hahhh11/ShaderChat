@@ -13,4 +13,5 @@ export { default as ResizableDivider } from "./ResizableDivider";
 export { defaultVertexShader, defaultFragmentShader } from "./shaderTemplates";
 export type { Uniforms } from "./types";
 export type { Message } from "./types";
+export type { ModelConfig } from "./types";
 export { discoverUniformNames, setupUniforms } from "./shaderUtils";

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import {
@@ -8,6 +8,7 @@ import {
   NavigationBar,
   Uniforms,
   Message,
+  ModelConfig,
   defaultVertexShader,
   defaultFragmentShader,
   discoverUniformNames,
@@ -39,7 +40,7 @@ function App() {
   const [customUniforms, setCustomUniforms] = useState<Uniforms>({} as Uniforms);
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<Message[]>([
-    { text: 'Welcome to ShaderChat! You can enter questions or commands here.', sender: 'assistant' }
+    { text: '欢迎使用 ShaderChat！您可以在这里输入问题或指令。', sender: 'assistant' }
   ]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isVsCollapsed, setIsVsCollapsed] = useState<boolean>(false);
@@ -58,25 +59,32 @@ function App() {
   // 时间动画引用
   const animationRef = useRef<number>(0);
   
+  // 模型配置状态
+  const [models, setModels] = useState<ModelConfig[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  
 
   
-  // 使用工具函数处理Uniforms
-  const handleFragmentShaderChange = (newFragmentShader: string) => {
+  // 使用防抖机制处理Fragment Shader变化
+  const handleFragmentShaderChange = useCallback((newFragmentShader: string) => {
     setFragmentShader(newFragmentShader);
-    const uniformNames = discoverUniformNames(newFragmentShader);
-    setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms);
-  };
+    // 延迟uniforms更新，避免频繁重新渲染
+    setTimeout(() => {
+      const uniformNames = discoverUniformNames(newFragmentShader);
+      setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms);
+    }, 100);
+  }, [customUniforms, uniforms]);
   
   // 在CodeEditor组件中使用
   const handleFragmentShaderChangeWrapper = (newFragmentShader: string) => {
     handleFragmentShaderChange(newFragmentShader);
   };
 
-  // 编译和链接Shaders
+  // 编译和链接Shaders - 优化依赖项，避免重复调用
   useEffect(() => {
     const uniformNames = discoverUniformNames(fragmentShader);
     setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms);
-  }, [fragmentShader, customUniforms]);
+  }, [fragmentShader]); // 移除customUniforms依赖，避免循环更新
   
   // 更新iResolution
   // useEffect(() => {
@@ -96,18 +104,28 @@ function App() {
   //   return () => window.removeEventListener('resize', updateResolution);
   // }, []);
   
-  // 更新Uniform值
-  const updateUniformValue = (name: string, value: number): void => {
-    setCustomUniforms(prev => ({
-      ...prev,
-      [name]: { value }
-    }));
+  // 更新Uniform值 - 优化性能，避免重复设置相同值
+  const updateUniformValue = useCallback((name: string, value: number): void => {
+    setCustomUniforms(prev => {
+      const currentValue = prev[name]?.value;
+      // 只在值真正变化时更新
+      if (currentValue === value) return prev;
+      return {
+        ...prev,
+        [name]: { value }
+      };
+    });
     
-    setUniforms(prev => ({
-      ...prev,
-      [name]: { value }
-    }));
-  };
+    setUniforms(prev => {
+      const currentValue = prev[name]?.value;
+      // 只在值真正变化时更新
+      if (currentValue === value) return prev;
+      return {
+        ...prev,
+        [name]: { value }
+      };
+    });
+  }, []);
   
   // 动画循环 - 移除iTime更新，由ShaderMaterial内部处理
   useEffect(() => {
@@ -120,21 +138,123 @@ function App() {
     };
   }, []);
   
-  // 发送消息
-  const sendMessage = (): void => {
-    if (inputMessage.trim()) {
-      const newMessages = [...messages, { text: inputMessage, sender: 'user' as const }];
-      setMessages(newMessages);
-      setInputMessage('');
+  // 发送消息到AI模型
+  const sendMessage = async (message: string): Promise<void> => {
+    if (!message.trim()) return;
+    
+    // 处理#vs和#fs引用
+    let processedMessage = message;
+    if (message.includes('#vs')) {
+      processedMessage = processedMessage.replace(/#vs/g, `\n=== Vertex Shader代码 ===\n${vertexShader}\n=== Vertex Shader代码结束 ===\n`);
+    }
+    if (message.includes('#fs')) {
+      processedMessage = processedMessage.replace(/#fs/g, `\n=== Fragment Shader代码 ===\n${fragmentShader}\n=== Fragment Shader代码结束 ===\n`);
+    }
+    
+    // 添加用户消息（显示原始消息）
+    const newMessages = [...messages, { text: message, sender: 'user' as const }];
+    setMessages(newMessages);
+    setInputMessage('');
+    
+    // 如果没有选中模型，显示错误消息
+    if (!selectedModel) {
+      const errorMessage: Message = {
+        text: '请先配置并选择一个AI模型',
+        sender: 'assistant' as const
+      };
+      setMessages([...newMessages, errorMessage]);
+      return;
+    }
+    
+    // 查找选中的模型配置
+    const currentModel = models.find(model => model.name === selectedModel);
+    if (!currentModel) {
+      const errorMessage: Message = {
+        text: '找不到选中的模型配置',
+        sender: 'assistant' as const
+      };
+      setMessages([...newMessages, errorMessage]);
+      return;
+    }
+    
+    try {
+      // 根据模型地址判断API类型
+      let response;
       
-      // 模拟助手响应
-      setTimeout(() => {
+      if (currentModel.address.includes('openai.com')) {
+        // OpenAI API
+        response = await fetch(`${currentModel.address}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentModel.apiKey}`
+          },
+          body: JSON.stringify({
+            model: currentModel.model,
+            messages: [
+              {
+                role: 'user',
+                content: processedMessage // 使用处理后的消息
+              }
+            ],
+            max_tokens: 2000, // 增加token限制以容纳shader代码
+            temperature: 0.7
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`OpenAI API错误: ${response.status}`);
+        }
+        
+        const data = await response.json();
         const assistantMessage: Message = {
-          text: `收到您的消息: "${inputMessage}"`,
+          text: data.choices[0].message.content,
           sender: 'assistant' as const
         };
         setMessages([...newMessages, assistantMessage]);
-      }, 1000);
+        
+      } else {
+        // 其他兼容OpenAI API的模型
+        // 检查地址是否已经包含/v1，避免重复添加
+        const baseAddress = currentModel.address.endsWith('/v1') ? currentModel.address : `${currentModel.address}/v1`;
+        response = await fetch(`${baseAddress}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${currentModel.apiKey}`
+          },
+          body: JSON.stringify({
+            model: currentModel.model,
+            messages: [
+              {
+                role: 'user',
+                content: processedMessage // 使用处理后的消息
+              }
+            ],
+            max_tokens: 2000, // 增加token限制以容纳shader代码
+            temperature: 0.7
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`API错误: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        const assistantMessage: Message = {
+          text: data.choices[0].message.content,
+          sender: 'assistant' as const
+        };
+        setMessages([...newMessages, assistantMessage]);
+      }
+      
+    } catch (error) {
+      console.error('API调用失败:', error);
+      const errorMessage: Message = {
+        text: `抱歉，模型调用失败: ${error instanceof Error ? error.message : '未知错误'}`,
+        sender: 'assistant' as const
+      };
+      setMessages([...newMessages, errorMessage]);
     }
   };
   
@@ -266,7 +386,7 @@ function App() {
                 onClick={toggleUniformControls}
                 title={showUniformControls ? "隐藏控制面板" : "显示控制面板"}
               >
-                {showUniformControls ? 'Uniforms' : 'Uniforms'}
+                Uniforms
               </button>
             </div>
             <div id="shader-canvas" ref={canvasRef}>
@@ -323,6 +443,10 @@ function App() {
         onSendMessage={sendMessage}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
+        models={models}
+        setModels={setModels}
+        selectedModel={selectedModel}
+        setSelectedModel={setSelectedModel}
       />
     </div>
   );

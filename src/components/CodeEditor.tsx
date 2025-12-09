@@ -40,6 +40,7 @@ interface CodeEditorProps {
 
 const CodeEditor: React.FC<CodeEditorProps> = ({ id, defaultValue, onChange }) => {
   const editorRef = useRef<Ace.Editor | null>(null);
+  const initialValueSet = useRef(false); // 标记初始值是否已设置
   
   useEffect(() => {
     // 初始化编辑器
@@ -49,7 +50,15 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ id, defaultValue, onChange }) =
     if (editor) {
       editor.setTheme('ace/theme/monokai');
       editor.session.setMode('ace/mode/glsl');
-      editor.setValue(defaultValue, 1); // 使用1让光标在文档末尾
+      
+      // 设置初始值，保持光标位置
+      if (!initialValueSet.current) {
+        const currentValue = editor.getValue();
+        if (currentValue !== defaultValue) {
+          editor.setValue(defaultValue, -1); // 使用-1保持光标位置不变
+          initialValueSet.current = true;
+        }
+      }
       
       // 添加变化监听器
       editor.on('change', () => {
@@ -83,14 +92,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ id, defaultValue, onChange }) =
         editor.container.style.fontFamily = 'Consolas, Monaco, "Courier New", monospace';
       }
       
-      // 延迟调整大小和光标定位
+      // 延迟调整大小
       setTimeout(() => {
         if (editorRef.current) {
           editorRef.current.resize();
-          // 将光标移到文档末尾
-          const session = editorRef.current.getSession();
-          const rowCount = session.getLength();
-          editorRef.current.gotoLine(rowCount, session.getLine(rowCount - 1).length);
         }
       }, 100);
     }
@@ -104,9 +109,10 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ id, defaultValue, onChange }) =
           // 忽略销毁错误
         }
         editorRef.current = null;
+        initialValueSet.current = false;
       }
     };
-  }, [id, defaultValue, onChange]);
+  }, [id]); // 只在id变化时重新初始化编辑器
   
   const resizeEditor = () => {
     if (editorRef.current) {
