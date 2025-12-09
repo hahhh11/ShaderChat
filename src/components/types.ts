@@ -11,6 +11,11 @@ export interface Uniforms {
 export interface Message {
   text: string;
   sender: 'assistant' | 'user';
+  metadata?: {
+    type?: string;
+    parsed?: any;
+    originalText?: string;
+  };
 }
 
 export interface CodeEditorProps {

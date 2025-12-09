@@ -59,6 +59,97 @@ function App() {
   
   // 时间动画引用
   const animationRef = useRef<number>(0);
+
+  // AI响应解析状态
+  const [parsedResponse, setParsedResponse] = useState<{
+    description: string;
+    vertexShader: string;
+    fragmentShader: string;
+    changes: string[];
+  } | null>(null);
+
+  // 应用AI生成的shader代码
+  const applyShaderChanges = () => {
+    if (parsedResponse) {
+      if (parsedResponse.vertexShader && parsedResponse.vertexShader !== '无修改') {
+        setVertexShader(parsedResponse.vertexShader);
+      }
+      if (parsedResponse.fragmentShader && parsedResponse.fragmentShader !== '无修改') {
+        setFragmentShader(parsedResponse.fragmentShader);
+      }
+      setParsedResponse(null); // 清除解析结果
+    }
+  };
+
+  // 生成diff比较
+  const generateDiff = (oldCode: string, newCode: string, type: 'vs' | 'fs') => {
+    const oldLines = oldCode.split('\n');
+    const newLines = newCode.split('\n');
+    
+    // 简单的行级diff算法
+    const maxLines = Math.max(oldLines.length, newLines.length);
+    const diffLines = [];
+    
+    for (let i = 0; i < maxLines; i++) {
+      const oldLine = oldLines[i] || '';
+      const newLine = newLines[i] || '';
+      
+      if (oldLine !== newLine) {
+        if (oldLine && newLine) {
+          diffLines.push({ type: 'modified', lineNum: i + 1, oldLine, newLine });
+        } else if (oldLine && !newLine) {
+          diffLines.push({ type: 'deleted', lineNum: i + 1, line: oldLine });
+        } else if (!oldLine && newLine) {
+          diffLines.push({ type: 'added', lineNum: i + 1, line: newLine });
+        }
+      }
+    }
+    
+    return diffLines;
+  };
+
+  // 解析AI响应的函数
+  const parseAIResponse = (responseText: string) => {
+    const formatStart = responseText.indexOf('=== FORMAT START ===');
+    const formatEnd = responseText.indexOf('=== FORMAT END ===');
+    
+    if (formatStart === -1 || formatEnd === -1) {
+      return null; // 不是固定格式，返回null
+    }
+    
+    const formatContent = responseText.substring(formatStart + 20, formatEnd).trim();
+    
+    // 提取各个部分
+    const descriptionMatch = formatContent.match(/\*\*修改说明：\*\*\s*\n([^*]+)/);
+    const vertexShaderMatch = formatContent.match(/\*\*Vertex Shader代码：\*\*\s*\n```glsl\s*\n([\s\S]*?)\n```/);
+    const fragmentShaderMatch = formatContent.match(/\*\*Fragment Shader代码：\*\*\s*\n```glsl\s*\n([\s\S]*?)\n```/);
+    const changesMatch = formatContent.match(/\*\*主要变更：\*\*\s*\n([\s\S]*?)(?=\n\*|$)/);
+    
+    if (!descriptionMatch || !vertexShaderMatch || !fragmentShaderMatch) {
+      return null; // 格式不完整
+    }
+    
+    const description = descriptionMatch[1].trim();
+    const vertexShader = vertexShaderMatch[1].trim();
+    const fragmentShader = fragmentShaderMatch[1].trim();
+    
+    // 解析变更列表
+    let changes: string[] = [];
+    if (changesMatch) {
+      changes = changesMatch[1]
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('- '))
+        .map(line => line.substring(2));
+    }
+    
+    return {
+      description,
+      vertexShader: vertexShader === '无修改' ? '无修改' : vertexShader,
+      fragmentShader: fragmentShader === '无修改' ? '无修改' : fragmentShader,
+      changes
+    };
+  };
   
   // 模型配置状态 - 使用useModels Hook
   const {
@@ -231,6 +322,37 @@ function App() {
     if (message.includes('#fs')) {
       processedMessage = processedMessage.replace(/#fs/g, `\n=== Fragment Shader代码 ===\n${fragmentShader}\n=== Fragment Shader代码结束 ===\n`);
     }
+
+    // 添加系统提示词，要求模型返回固定格式
+    const systemPrompt = `你是一个专业的GLSL着色器专家。当用户要求修改或生成着色器代码时，请按照以下格式返回：
+
+=== FORMAT START ===
+**修改说明：**
+[简要描述你做了什么修改]
+
+**Vertex Shader代码：**
+\`\`\`glsl
+[新的顶点着色器代码，如果没有修改则写"无修改"]
+\`\`\`
+
+**Fragment Shader代码：**
+\`\`\`glsl
+[新的片段着色器代码，如果没有修改则写"无修改"]
+\`\`\`
+
+**主要变更：**
+- [列出主要变更点]
+=== FORMAT END ===
+
+重要规则：
+1. 必须严格遵循上述格式
+2. 代码块必须标明glsl语言类型
+3. 如果某个着色器没有修改，要写"无修改"
+4. 修改说明要简洁明了
+5. 主要变更要用列表形式`;
+
+    // 构建最终的消息内容
+    const finalMessage = `${systemPrompt}\n\n用户请求：${processedMessage}`;
     
     // 添加用户消息（显示原始消息）
     const newMessages = [...messages, { text: message, sender: 'user' as const }];
@@ -283,6 +405,10 @@ function App() {
             model: currentModel.model,
             messages: [
               {
+                role: 'system',
+                content: systemPrompt
+              },
+              {
                 role: 'user',
                 content: processedMessage // 使用处理后的消息
               }
@@ -297,11 +423,33 @@ function App() {
         }
         
         const data = await response.json();
-        const assistantMessage: Message = {
-          text: data.choices[0].message.content,
-          sender: 'assistant' as const
-        };
-        setMessages([...newMessages, assistantMessage]);
+        const responseText = data.choices[0].message.content;
+        
+        // 尝试解析固定格式的响应
+        const parsed = parseAIResponse(responseText);
+        if (parsed) {
+          // 如果是固定格式，显示解析后的信息
+          const formattedMessage = `### 🎨 修改说明\n${parsed.description}\n\n### 📊 着色器更新状态\n- **顶点着色器：** ${parsed.vertexShader === '无修改' ? '✅ 无修改' : '🔄 已更新'}\n- **片段着色器：** ${parsed.fragmentShader === '无修改' ? '✅ 无修改' : '🔄 已更新'}\n\n### 📝 主要变更\n${parsed.changes.map(change => `- ${change}`).join('\n')}\n\n### 💡 操作提示\n点击上方"应用更改"按钮来更新代码，或查看右侧原始响应内容。`;
+          
+          const assistantMessage: Message = {
+            text: formattedMessage,
+            sender: 'assistant' as const,
+            metadata: {
+              type: 'shader_update',
+              parsed: parsed,
+              originalText: responseText
+            }
+          };
+          setMessages([...newMessages, assistantMessage]);
+          setParsedResponse(parsed); // 保存解析结果用于应用
+        } else {
+          // 如果不是固定格式，按原样显示
+          const assistantMessage: Message = {
+            text: responseText,
+            sender: 'assistant' as const
+          };
+          setMessages([...newMessages, assistantMessage]);
+        }
         
       } else {
         // 其他兼容OpenAI API的模型
@@ -317,6 +465,10 @@ function App() {
             model: currentModel.model,
             messages: [
               {
+                role: 'system',
+                content: systemPrompt
+              },
+              {
                 role: 'user',
                 content: processedMessage // 使用处理后的消息
               }
@@ -331,11 +483,51 @@ function App() {
         }
         
         const data = await response.json();
-        const assistantMessage: Message = {
-          text: data.choices[0].message.content,
-          sender: 'assistant' as const
-        };
-        setMessages([...newMessages, assistantMessage]);
+        const responseText = data.choices[0].message.content;
+        
+        // 尝试解析固定格式的响应
+        const parsed = parseAIResponse(responseText);
+        if (parsed) {
+          // 如果是固定格式，显示解析后的信息
+          const formattedMessage = `=== FORMAT START ===
+
+**修改说明：**
+${parsed.description}
+
+**Vertex Shader代码：**
+\`\`\`glsl
+${parsed.vertexShader}
+\`\`\`
+
+**Fragment Shader代码：**
+\`\`\`glsl
+${parsed.fragmentShader}
+\`\`\`
+
+**主要变更：**
+${parsed.changes.map(change => `- ${change}`).join('\n')}
+
+=== FORMAT END ===`;
+          
+          const assistantMessage: Message = {
+            text: formattedMessage,
+            sender: 'assistant' as const,
+            metadata: {
+              type: 'shader_update',
+              parsed: parsed,
+              originalText: responseText
+            }
+          };
+          setMessages([...newMessages, assistantMessage]);
+          setParsedResponse(parsed); // 保存解析结果用于应用
+        } else {
+          // 如果不是固定格式，按原样显示
+          const assistantMessage: Message = {
+            text: responseText,
+            sender: 'assistant' as const
+          };
+          setMessages([...newMessages, assistantMessage]);
+        }
       }
       
     } catch (error) {
@@ -460,6 +652,16 @@ function App() {
               defaultValue={vertexShader} 
               onChange={setVertexShader} 
             />
+            
+            {/* AI建议的应用按钮 */}
+            {parsedResponse && parsedResponse.vertexShader !== '无修改' && (
+              <div className="ai-suggestion-banner">
+                <span>🤖 AI建议更新顶点着色器</span>
+                <button className="ai-apply-btn" onClick={applyShaderChanges}>
+                  应用更改
+                </button>
+              </div>
+            )}
           </div>
           
           <div className="panel-header">
@@ -472,6 +674,16 @@ function App() {
               defaultValue={fragmentShader} 
               onChange={handleFragmentShaderChangeWrapper} 
             />
+            
+            {/* AI建议的应用按钮 */}
+            {parsedResponse && parsedResponse.fragmentShader !== '无修改' && (
+              <div className="ai-suggestion-banner">
+                <span>🤖 AI建议更新片段着色器</span>
+                <button className="ai-apply-btn" onClick={applyShaderChanges}>
+                  应用更改
+                </button>
+              </div>
+            )}
           </div>
         </div>
         

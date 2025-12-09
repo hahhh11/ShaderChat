@@ -440,6 +440,303 @@ body.resizing * {
     pointer-events: none;
 }
 
+/* AI响应消息样式 */
+.ai-response-formatted {
+  padding: 15px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #2a2a4e;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  margin: 10px 0;
+}
+
+.response-section {
+  margin-bottom: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #4a90e2;
+}
+
+.response-section h4 {
+  margin: 0 0 10px 0;
+  color: #4a90e2;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.response-section p {
+  margin: 0;
+  color: #e0e0e0;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.response-section pre {
+  background: #0d1117;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 10px 0;
+  overflow-x: auto;
+}
+
+.response-section code {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  color: #58a6ff;
+  background: transparent;
+  padding: 0;
+}
+
+.response-section .glsl-code {
+  color: #7dd3fc;
+  line-height: 1.5;
+}
+
+.changes-list {
+  margin-top: 10px;
+}
+
+.change-item {
+  color: #a3e635;
+  font-size: 13px;
+  margin: 5px 0;
+  padding-left: 10px;
+  border-left: 2px solid #4a90e2;
+}
+
+/* 流动渐变动画 */
+@keyframes gradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.ai-response-message {
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-response-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #4a90e2, #7dd3fc, transparent);
+  animation: gradientFlow 3s linear infinite;
+}
+.ai-response-message {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  border: 1px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  color: #f8fafc;
+  font-size: 14px;
+  line-height: 1.6;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-response-message::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #60a5fa, #3b82f6, #2563eb);
+}
+
+.ai-response-message h3 {
+  margin: 12px 0 8px 0;
+  color: #e2e8f0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-response-message h3:first-child {
+  margin-top: 0;
+}
+
+.ai-response-message ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.ai-response-message li {
+  margin: 4px 0;
+  color: #cbd5e1;
+}
+
+.ai-response-message p {
+  margin: 8px 0;
+  color: #e2e8f0;
+}
+
+/* AI响应消息样式 */
+.ai-response-message {
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+    border: 1px solid rgba(0, 122, 204, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.ai-response-message::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #007acc, #0099ff, #007acc);
+    animation: gradientFlow 3s ease-in-out infinite;
+}
+
+@keyframes gradientFlow {
+    0%, 100% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+}
+
+.ai-response-message h3 {
+    color: #0099ff;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 122, 204, 0.2);
+}
+
+.ai-response-message h4 {
+    color: #66b3ff;
+    font-size: 14px;
+    font-weight: 500;
+    margin: 12px 0 8px 0;
+}
+
+.ai-response-message p {
+    color: #e0e0e0;
+    line-height: 1.6;
+    margin: 8px 0;
+}
+
+.ai-response-message ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.ai-response-message li {
+    color: #cccccc;
+    margin: 4px 0;
+    line-height: 1.5;
+}
+
+.ai-response-message code {
+    background: rgba(0, 0, 0, 0.3);
+    color: #66ff66;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ai-response-message pre {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin: 10px 0;
+    overflow-x: auto;
+    position: relative;
+}
+
+.ai-response-message pre::before {
+    content: 'GLSL';
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    font-size: 11px;
+    color: #999;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.ai-response-message pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #66ff66;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* AI建议横幅样式 */
+.ai-suggestion-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 122, 204, 0.4);
+  z-index: 20;
+  animation: aiBannerSlideIn 0.3s ease-out;
+}
+
+@keyframes aiBannerSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.ai-apply-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ai-apply-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.ai-apply-btn:active {
+  transform: translateY(0);
+}
+
 #controls-panel .panel-header {
     border-bottom: 1px solid #444;
     background-color: #2c2c2c;

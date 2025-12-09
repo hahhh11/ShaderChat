@@ -88,7 +88,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
     setIsEditModalOpen(true);
   };
 
-
+  
 
   const handleTestModel = async (model: ModelConfig): Promise<boolean> => {
     try {
@@ -108,6 +108,58 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 渲染消息内容，支持Markdown格式
+  const renderMessageContent = (text: string) => {
+    // 检查是否是AI响应格式
+    if (text.includes('=== FORMAT START ===') && text.includes('=== FORMAT END ===')) {
+      // 提取各个部分
+      const descriptionMatch = text.match(/\*\*修改说明：\*\*\s*\n?([^*]*?)(?=\*\*Vertex|$)/s);
+      const vertexMatch = text.match(/\*\*Vertex Shader代码：\*\*\s*\n?```glsl\s*\n?([\s\S]*?)\s*\n?```/s);
+      const fragmentMatch = text.match(/\*\*Fragment Shader代码：\*\*\s*\n?```glsl\s*\n?([\s\S]*?)\s*\n?```/s);
+      const changesMatch = text.match(/\*\*主要变更：\*\*\s*\n?([\s\S]*?)(?=\*\*Vertex|$)/s);
+
+      return (
+        <div className="ai-response-formatted">
+          {descriptionMatch && (
+            <div className="response-section">
+              <h4>📝 修改说明</h4>
+              <p>{descriptionMatch[1].trim()}</p>
+            </div>
+          )}
+          
+          {vertexMatch && vertexMatch[1].trim() !== '无修改' && (
+            <div className="response-section">
+              <h4>🔺 Vertex Shader</h4>
+              <pre><code className="glsl-code">{vertexMatch[1].trim()}</code></pre>
+            </div>
+          )}
+          
+          {fragmentMatch && fragmentMatch[1].trim() !== '无修改' && (
+            <div className="response-section">
+              <h4>🔸 Fragment Shader</h4>
+              <pre><code className="glsl-code">{fragmentMatch[1].trim()}</code></pre>
+            </div>
+          )}
+          
+          {changesMatch && (
+            <div className="response-section">
+              <h4>🔄 主要变更</h4>
+              <div className="changes-list">
+                {changesMatch[1].trim().split('\n').map((line, i) => {
+                  const cleanLine = line.replace(/^-\s*/, '').trim();
+                  return cleanLine ? <div key={i} className="change-item">• {cleanLine}</div> : null;
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    
+    // 普通消息，直接显示
+    return <>{text}</>;
+  };
 
   const handleSendMessage = () => {
     if (inputMessage.trim()) {
@@ -190,30 +242,35 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
       <div id="chat-container">
         <div id="chat-messages">
           <div className="chat-messages-container">
-            {messages.map((message, index) => (
-              <div key={index} className={`chat-message-container ${message.sender}`} onMouseEnter={() => handleMouseEnter(index)}>
-                <div className={`chat-message ${message.sender}`}>
-                  {message.text}
+            {messages.map((message, index) => {
+              // 检查是否是AI响应格式
+              const isAIResponse = message.text.includes('=== FORMAT START ===') && message.text.includes('=== FORMAT END ===');
+              
+              return (
+                <div key={index} className={`chat-message-container ${message.sender}`} onMouseEnter={() => handleMouseEnter(index)}>
+                  <div className={`chat-message ${message.sender} ${isAIResponse ? 'ai-response-message' : ''}`}>
+                    {renderMessageContent(message.text)}
+                  </div>
+                  <div className="chat-message-actions">
+                    <button className={`chat-message-copy-btn ${copiedStates[index] ? 'copied' : ''}`} onClick={(e) => {
+                      e.stopPropagation();
+                      copyMessageText(message.text, index);
+                    }} title={copiedStates[index] ? '已复制!' : '复制消息'}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        {copiedStates[index] ? (
+                          <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"></path>
+                        ) : (
+                          <>
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </>
+                        )}
+                      </svg>
+                    </button>
+                  </div>
                 </div>
-                <div className="chat-message-actions">
-                  <button className={`chat-message-copy-btn ${copiedStates[index] ? 'copied' : ''}`} onClick={(e) => {
-                    e.stopPropagation();
-                    copyMessageText(message.text, index);
-                  }} title={copiedStates[index] ? '已复制!' : '复制消息'}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      {copiedStates[index] ? (
-                        <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"></path>
-                      ) : (
-                        <>
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                        </>
-                      )}
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
             {isTyping && (
               <div className="chat-message-container assistant">
                 <div className="chat-message assistant typing-indicator">
@@ -232,7 +289,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
           <div className="model-selector">
             <div className="model-selector-info">
               <span className="model-status-indicator"></span>
-            </div>
+             </div>
             <div className="model-selector-header">
               <span className="model-selector-label">Chat with </span>
               {models.length > 0 ? (
