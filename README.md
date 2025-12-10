@@ -71,8 +71,10 @@ pnpm build
 - **导航栏**: 顶部模型选择和功能菜单
 
 ## TODO
+
+- [x] 直接应用大模型返回的shader代码
 - [ ] 完善unifroms类型及取值
-- [ ] 直接应用大模型返回的shader代码
+- [ ] 提示当前uniforms的取值
 - [ ] diff大模型返回和现有shader的差异
 - [ ] 历史对话记录及shader代码保存
 

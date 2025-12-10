@@ -209,7 +209,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
               <h4>🔄 主要变更</h4>
               <div className="changes-list">
                 {changesMatch[1].trim().split('\n').map((line, i) => {
-                  const cleanLine = line.replace(/^-\s*/, '').replace(/^•\s*/, '').trim();
+                  const cleanLine = line.replace(/^-\s*/, '').replace(/^•\s*/, '').replace(/=== FORMAT END ===/, '').trim();
                   return cleanLine ? <div key={i} className="change-item">• {cleanLine}</div> : null;
                 })}
               </div>

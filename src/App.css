@@ -1699,7 +1699,7 @@ body.resizing * {
 
 /* 对话框样式 - 半透明磨砂效果 */
 #chat-container {
-    height: 300px;
+    height: 300px; /* 默认高度 */
     background: rgba(37, 37, 38, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-bottom: none;
@@ -1713,6 +1713,13 @@ body.resizing * {
     -webkit-backdrop-filter: blur(15px);
     margin: 0;
     width: 100%;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 当抽屉打开时，让对话框铺满整个预览区域 */
+#chat-drawer.open #chat-container {
+    height: calc(100vh - 41px - 60px); /* 视口高度减去顶部栏和底部边距 */
+    max-height: calc(100vh - 41px - 60px);
 }
 
 /* 展开状态 - 图标旋转并按钮上移 */
@@ -1729,7 +1736,7 @@ body.resizing * {
 
 #chat-drawer.open + .chat-toggle-btn,
 .chat-toggle-btn.move-up {
-    bottom: 310px; /* 对话框高度300px + 原始底部间距10px */
+    bottom: calc(100vh - 41px - 120px + 10px); /* 根据动态高度计算按钮位置 */
 }
 
 /* 消息区域 */
