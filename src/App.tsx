@@ -13,7 +13,8 @@ import {
   defaultFragmentShader,
   discoverUniformNames,
   setupUniforms,
-  useModels
+  useModels,
+  ColorPicker
 } from './components';
 import './App.css';
 
@@ -46,6 +47,11 @@ function App() {
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isVsCollapsed, setIsVsCollapsed] = useState<boolean>(false);
   const [isFsCollapsed, setIsFsCollapsed] = useState<boolean>(false);
+
+  // 确保ChatDrawer默认关闭
+  useEffect(() => {
+    setIsChatOpen(false);
+  }, []);
   
   // 可调整宽度状态
   const [leftPanelWidth, setLeftPanelWidth] = useState<number>(400);
@@ -81,32 +87,7 @@ function App() {
     }
   };
 
-  // 生成diff比较
-  const generateDiff = (oldCode: string, newCode: string, type: 'vs' | 'fs') => {
-    const oldLines = oldCode.split('\n');
-    const newLines = newCode.split('\n');
-    
-    // 简单的行级diff算法
-    const maxLines = Math.max(oldLines.length, newLines.length);
-    const diffLines = [];
-    
-    for (let i = 0; i < maxLines; i++) {
-      const oldLine = oldLines[i] || '';
-      const newLine = newLines[i] || '';
-      
-      if (oldLine !== newLine) {
-        if (oldLine && newLine) {
-          diffLines.push({ type: 'modified', lineNum: i + 1, oldLine, newLine });
-        } else if (oldLine && !newLine) {
-          diffLines.push({ type: 'deleted', lineNum: i + 1, line: oldLine });
-        } else if (!oldLine && newLine) {
-          diffLines.push({ type: 'added', lineNum: i + 1, line: newLine });
-        }
-      }
-    }
-    
-    return diffLines;
-  };
+  // 生成diff比较函数已移除
 
   // 解析AI响应的函数
   const parseAIResponse = (responseText: string) => {
@@ -243,7 +224,7 @@ function App() {
     // 延迟uniforms更新，避免频繁重新渲染
     setTimeout(() => {
       const uniformNames = discoverUniformNames(newFragmentShader);
-      setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms);
+      setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms, newFragmentShader);
     }, 100);
   }, [customUniforms, uniforms]);
   
@@ -255,7 +236,7 @@ function App() {
   // 编译和链接Shaders - 优化依赖项，避免重复调用
   useEffect(() => {
     const uniformNames = discoverUniformNames(fragmentShader);
-    setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms);
+    setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms, fragmentShader);
   }, [fragmentShader]); // 移除customUniforms依赖，避免循环更新
   
   // 更新iResolution
@@ -295,6 +276,66 @@ function App() {
       return {
         ...prev,
         [name]: { value }
+      };
+    });
+  }, []);
+
+  // 更新vec3 Uniform值 - 优化性能，避免重复设置相同值
+  const updateVec3UniformValue = useCallback((name: string, value: { r: number; g: number; b: number }): void => {
+    setCustomUniforms(prev => {
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number };
+      // 只在值真正变化时更新
+      if (currentValue && 
+          currentValue.r === value.r && 
+          currentValue.g === value.g && 
+          currentValue.b === value.b) return prev;
+      return {
+        ...prev,
+        [name]: { value, type: 'vec3' }
+      };
+    });
+    
+    setUniforms(prev => {
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number };
+      // 只在值真正变化时更新
+      if (currentValue && 
+          currentValue.r === value.r && 
+          currentValue.g === value.g && 
+          currentValue.b === value.b) return prev;
+      return {
+        ...prev,
+        [name]: { value, type: 'vec3' }
+      };
+    });
+  }, []);
+
+  // 更新vec4 Uniform值 - 优化性能，避免重复设置相同值
+  const updateVec4UniformValue = useCallback((name: string, value: { r: number; g: number; b: number; a: number }): void => {
+    setCustomUniforms(prev => {
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number };
+      // 只在值真正变化时更新
+      if (currentValue && 
+          currentValue.r === value.r && 
+          currentValue.g === value.g && 
+          currentValue.b === value.b && 
+          currentValue.a === value.a) return prev;
+      return {
+        ...prev,
+        [name]: { value, type: 'vec4' }
+      };
+    });
+    
+    setUniforms(prev => {
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number };
+      // 只在值真正变化时更新
+      if (currentValue && 
+          currentValue.r === value.r && 
+          currentValue.g === value.g && 
+          currentValue.b === value.b && 
+          currentValue.a === value.a) return prev;
+      return {
+        ...prev,
+        [name]: { value, type: 'vec4' }
       };
     });
   }, []);
@@ -351,9 +392,6 @@ function App() {
 4. 修改说明要简洁明了
 5. 主要变更要用列表形式`;
 
-    // 构建最终的消息内容
-    const finalMessage = `${systemPrompt}\n\n用户请求：${processedMessage}`;
-    
     // 添加用户消息（显示原始消息）
     const newMessages = [...messages, { text: message, sender: 'user' as const }];
     setMessages(newMessages);
@@ -698,7 +736,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
           {/* 3D预览面板 */}
           <div id="preview-panel">
             <div className="panel-header">
-              3D PREVIEW
+              PREVIEW
               <button 
                 className={`controls-toggle-btn ${showUniformControls ? 'active' : ''}`}
                 onClick={toggleUniformControls}
@@ -738,6 +776,8 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
                 selectedModel={selectedModel}
                 setSelectedModel={setSelectedModel}
                 onTestModel={handleTestModel}
+                onApplyVertexShader={setVertexShader}
+                onApplyFragmentShader={setFragmentShader}
               />
             </div>
           </div>
@@ -747,23 +787,49 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
         <div id="controls-panel" className={showUniformControls ? 'visible' : 'hidden'}>
           
           <div id="uniforms-controls">
-            {Object.keys(customUniforms).map(name => (
-              <div key={name} className="uniform-control">
-                <label>{name}</label>
-                <div>
-                  <input 
-                    type="range" 
-                    min="0" 
-                    max="1" 
-                    step="0.01" 
-                    value={(customUniforms[name].value as number).toFixed(2)} 
-                    onChange={(e) => updateUniformValue(name, parseFloat(e.target.value))}
-                    style={{ '--progress': `${(customUniforms[name].value as number) * 100}%` }}
-                  />
-                  <span>{(customUniforms[name].value as number).toFixed(2)}</span>
+            {Object.keys(customUniforms).map(name => {
+              const uniform = customUniforms[name];
+              const isVec3 = uniform.type === 'vec3' || (typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value));
+              const isVec4 = uniform.type === 'vec4' || (typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value);
+              
+              if (isVec3 || isVec4) {
+                return (
+                  <div key={name} className={`uniform-control ${isVec4 ? 'vec4-control' : 'vec3-control'}`}>
+                    <label>{name}</label>
+                    <ColorPicker
+                      color={isVec3 ? 
+                        { r: (uniform.value as { r: number; g: number; b: number }).r, g: (uniform.value as { r: number; g: number; b: number }).g, b: (uniform.value as { r: number; g: number; b: number }).b } :
+                        uniform.value as { r: number; g: number; b: number; a: number }
+                      }
+                      onChange={(color) => isVec3 ? 
+                        updateVec3UniformValue(name, { r: color.r, g: color.g, b: color.b }) :
+                        updateVec4UniformValue(name, color as { r: number; g: number; b: number; a: number })
+                      }
+                      label={name}
+                      showAlpha={!isVec3}
+                    />
+                  </div>
+                );
+              }
+              
+              return (
+                <div key={name} className="uniform-control">
+                  <label>{name}</label>
+                  <div>
+                    <input 
+                      type="range" 
+                      min="0" 
+                      max="1" 
+                      step="0.01" 
+                      value={(uniform.value as number).toFixed(2)} 
+                      onChange={(e) => updateUniformValue(name, parseFloat(e.target.value))}
+                      style={{ '--progress': `${(uniform.value as number) * 100}%` }}
+                    />
+                    <span>{(uniform.value as number).toFixed(2)}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

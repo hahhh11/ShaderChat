@@ -3,13 +3,14 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 interface UniformValue {
-  value: number | { x: number; y: number; z?: number };
+  value: number | { x: number; y: number; z?: number } | { r: number; g: number; b: number } | { r: number; g: number; b: number; a: number };
+  type?: 'float' | 'vec2' | 'vec3' | 'color' | 'vec4';
 }
 
 interface Uniforms {
   [key: string]: UniformValue;
   iTime: { value: number };
-  iResolution: { value: { x: number; y: number } };
+  iResolution: { value: { x: number; y: number; z?: number } };
 }
 
 interface ShaderMaterialProps {
@@ -39,7 +40,19 @@ const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader,
       // 只更新变化的uniforms值
       Object.keys(uniforms).forEach(key => {
         if (materialRef.current!.uniforms[key]) {
-          materialRef.current!.uniforms[key].value = uniforms[key].value;
+          const uniform = uniforms[key];
+          // 处理vec3类型 - 转换为THREE.Vector3
+          if (uniform.type === 'vec3' || (typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value))) {
+            const color = uniform.value as { r: number; g: number; b: number };
+            materialRef.current!.uniforms[key].value = new THREE.Vector3(color.r, color.g, color.b);
+          }
+          // 处理vec4类型 - 转换为THREE.Vector4
+          else if (uniform.type === 'vec4' || (typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value)) {
+            const color = uniform.value as { r: number; g: number; b: number; a: number };
+            materialRef.current!.uniforms[key].value = new THREE.Vector4(color.r, color.g, color.b, color.a);
+          } else {
+            materialRef.current!.uniforms[key].value = uniform.value;
+          }
         }
       });
     }

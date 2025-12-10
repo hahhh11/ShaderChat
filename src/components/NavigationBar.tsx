@@ -2,12 +2,16 @@
  * @Author: 98Precent
  * @Date: 2025-12-08 17:34:38
  * @LastEditors: Do not edit
- * @LastEditTime: 2025-12-09 09:37:32
+ * @LastEditTime: 2025-12-10 14:17:30
  * @FilePath: /ShaderChat/src/components/NavigationBar.tsx
  */
 import React from 'react';
 
-const NavigationBar: React.FC = () => {
+interface NavigationBarProps {
+  onLoadVec3Shader?: () => void;
+}
+
+const NavigationBar: React.FC<NavigationBarProps> = ({ onLoadVec3Shader }) => {
   return (
     <nav className="navigation-bar">
       <div className="nav-brand">

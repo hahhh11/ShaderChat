@@ -15,6 +15,8 @@ interface ChatDrawerProps {
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   onTestModel: (model: ModelConfig) => Promise<boolean>;
+  onApplyVertexShader?: (code: string) => void;
+  onApplyFragmentShader?: (code: string) => void;
 }
 
 const ChatDrawer: React.FC<ChatDrawerProps> = ({
@@ -28,17 +30,23 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
   setModels,
   selectedModel,
   setSelectedModel,
-  onTestModel
+  onTestModel,
+  onApplyVertexShader,
+  onApplyFragmentShader
 }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copiedStates, setCopiedStates] = useState<{[key: number]: boolean}>({});
-  const [language, setLanguage] = useState('zh-CN');
   const [editingModel, setEditingModel] = useState<any>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+  const [isMounted, setIsMounted] = useState(false);
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // 防止初始渲染时的闪烁
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   
   // 通知状态
   const [notification, setNotification] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -111,34 +119,88 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
 
   // 渲染消息内容，支持Markdown格式
   const renderMessageContent = (text: string) => {
-    // 检查是否是AI响应格式
-    if (text.includes('=== FORMAT START ===') && text.includes('=== FORMAT END ===')) {
-      // 提取各个部分
-      const descriptionMatch = text.match(/\*\*修改说明：\*\*\s*\n?([^*]*?)(?=\*\*Vertex|$)/s);
-      const vertexMatch = text.match(/\*\*Vertex Shader代码：\*\*\s*\n?```glsl\s*\n?([\s\S]*?)\s*\n?```/s);
-      const fragmentMatch = text.match(/\*\*Fragment Shader代码：\*\*\s*\n?```glsl\s*\n?([\s\S]*?)\s*\n?```/s);
-      const changesMatch = text.match(/\*\*主要变更：\*\*\s*\n?([\s\S]*?)(?=\*\*Vertex|$)/s);
+    // 检查是否是AI响应格式（支持多种格式变体）
+    const hasFormatMarkers = text.includes('=== FORMAT START ===') && text.includes('=== FORMAT END ===');
+    const hasMarkdownHeaders = text.includes('**修改说明：**') || text.includes('**Vertex Shader代码：**');
+    
+    if (hasFormatMarkers || hasMarkdownHeaders) {
+      // 提取各个部分 - 支持多种格式变体
+      const descriptionMatch = text.match(/\*\*修改说明：\*\*\s*\n?([^*]*?)(?=\*\*Vertex|$)/s) || 
+                               text.match(/返回了\*\*修改说明：\*\*\s*\n?([^*]*?)(?=\*\*Vertex|$)/s);
+      const vertexMatch = text.match(/\*\*Vertex Shader代码：\*\*\s*\n?```glsl\s*\n?([\s\S]*?)\s*\n?```/s) ||
+                         text.match(/\*\*Vertex Shader代码：\*\*\s*\n?([\s\S]*?)(?=\*\*Fragment|$)/s);
+      const fragmentMatch = text.match(/\*\*Fragment Shader代码：\*\*\s*\n?```glsl\s*\n?([\s\S]*?)\s*\n?```/s) ||
+                           text.match(/\*\*Fragment Shader代码：\*\*\s*\n?([\s\S]*?)(?=\*\*主要|$)/s) ||
+                           text.match(/```glsl\s*\n?([\s\S]*?)\s*\n?```/s);
+      const changesMatch = text.match(/\*\*主要变更：\*\*\s*\n?([\s\S]*?)(?=\*\*Vertex|$)/s) ||
+                          text.match(/\*\*主要变更：\*\*\s*\n?([\s\S]*?)$/s);
 
       return (
         <div className="ai-response-formatted">
           {descriptionMatch && (
             <div className="response-section">
               <h4>📝 修改说明</h4>
-              <p>{descriptionMatch[1].trim()}</p>
+              <p style={{whiteSpace: 'pre-wrap'}}>{descriptionMatch[1].trim()}</p>
             </div>
           )}
           
           {vertexMatch && vertexMatch[1].trim() !== '无修改' && (
             <div className="response-section">
-              <h4>🔺 Vertex Shader</h4>
-              <pre><code className="glsl-code">{vertexMatch[1].trim()}</code></pre>
+              <div className="code-section-header">
+                <h4>🔺 Vertex Shader</h4>
+                <button 
+                  className="chat-message-apply-btn" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onApplyVertexShader) {
+                      onApplyVertexShader(vertexMatch[1].trim());
+                      // 临时改变按钮文本
+                      const btn = e.target as HTMLButtonElement;
+                      const originalText = btn.innerHTML;
+                      btn.innerHTML = '✓';
+                      btn.style.color = '#4CAF50';
+                      setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.color = '';
+                      }, 2000);
+                    }
+                  }}
+                  title="应用Vertex Shader代码到编辑器"
+                >
+                  应用
+                </button>
+              </div>
+              <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}><code className="glsl-code">{vertexMatch[1].trim()}</code></pre>
             </div>
           )}
           
           {fragmentMatch && fragmentMatch[1].trim() !== '无修改' && (
             <div className="response-section">
-              <h4>🔸 Fragment Shader</h4>
-              <pre><code className="glsl-code">{fragmentMatch[1].trim()}</code></pre>
+              <div className="code-section-header">
+                <h4>🔸 Fragment Shader</h4>
+                <button 
+                  className="chat-message-apply-btn" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onApplyFragmentShader) {
+                      onApplyFragmentShader(fragmentMatch[1].trim());
+                      // 临时改变按钮文本
+                      const btn = e.target as HTMLButtonElement;
+                      const originalText = btn.innerHTML;
+                      btn.innerHTML = '✓';
+                      btn.style.color = '#4CAF50';
+                      setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.color = '';
+                      }, 2000);
+                    }
+                  }}
+                  title="应用Fragment Shader代码到编辑器"
+                >
+                  应用
+                </button>
+              </div>
+              <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}><code className="glsl-code">{fragmentMatch[1].trim()}</code></pre>
             </div>
           )}
           
@@ -147,7 +209,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
               <h4>🔄 主要变更</h4>
               <div className="changes-list">
                 {changesMatch[1].trim().split('\n').map((line, i) => {
-                  const cleanLine = line.replace(/^-\s*/, '').trim();
+                  const cleanLine = line.replace(/^-\s*/, '').replace(/^•\s*/, '').trim();
                   return cleanLine ? <div key={i} className="change-item">• {cleanLine}</div> : null;
                 })}
               </div>
@@ -180,12 +242,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+
 
   const copyMessageText = (text: string, index: number) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -237,7 +294,7 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
         <span>ShaderChat</span>
       </button>
       
-      <div id="chat-drawer" className={isOpen ? 'open' : ''}>
+      <div id="chat-drawer" className={isMounted && isOpen ? 'open' : ''} style={!isMounted ? { display: 'none' } : {}}>
       
       <div id="chat-container">
         <div id="chat-messages">
@@ -337,7 +394,6 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
                   
                   // 保存当前光标位置
                   let currentPos = 0;
-                  let found = false;
                   
                   const walker = document.createTreeWalker(
                     e.currentTarget,
@@ -349,7 +405,6 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
                   while (node = walker.nextNode()) {
                     if (node === container) {
                       currentPos += startOffset;
-                      found = true;
                       break;
                     }
                     currentPos += node.textContent?.length || 0;
@@ -411,8 +466,6 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
-        language={language}
-        onLanguageChange={setLanguage}
         models={models}
         onAddModel={handleAddModel}
         onEditModel={handleEditModel}

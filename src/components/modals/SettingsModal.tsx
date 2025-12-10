@@ -5,8 +5,6 @@ import AddModelModal from './AddModelModal';
 interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  language: string;
-  onLanguageChange: (language: string) => void;
   models: ModelConfig[];
   onAddModel: (model: ModelConfig) => void;
   onEditModel: (model: ModelConfig) => void;
@@ -17,8 +15,6 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ 
   isOpen, 
   onClose, 
-  language, 
-  onLanguageChange,
   models,
   onAddModel,
   onEditModel,
@@ -78,13 +74,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
           </button>
         </div>
         <div className="settings-modal-content">
-          {/* <div className="setting-item">
-            <label>语言设置</label>
-            <select value={language} onChange={(e) => onLanguageChange(e.target.value)}>
-              <option value="zh-CN">简体中文</option>
-              <option value="en">English</option>
-            </select>
-          </div> */}
           <div className="setting-item">
             <label>已配置模型列表</label>
             <div className="model-list">

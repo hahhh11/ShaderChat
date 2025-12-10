@@ -1,52 +1,53 @@
 export interface UniformValue {
-  value: number | { x: number; y: number; z?: number };
+	value: number | { x: number; y: number; z?: number } | { r: number; g: number; b: number } | { r: number; g: number; b: number; a: number };
+	type?: "float" | "vec2" | "vec3" | "color" | "vec4";
 }
 
 export interface Uniforms {
-  [key: string]: UniformValue;
-  iTime: { value: number };
-  iResolution: { value: { x: number; y: number } };
+	[key: string]: UniformValue;
+	iTime: { value: number };
+	iResolution: { value: { x: number; y: number; z?: number } };
 }
 
 export interface Message {
-  text: string;
-  sender: 'assistant' | 'user';
-  metadata?: {
-    type?: string;
-    parsed?: any;
-    originalText?: string;
-  };
+	text: string;
+	sender: "assistant" | "user";
+	metadata?: {
+		type?: string;
+		parsed?: any;
+		originalText?: string;
+	};
 }
 
 export interface CodeEditorProps {
-  id: string;
-  defaultValue: string;
-  onChange: (value: string) => void;
+	id: string;
+	defaultValue: string;
+	onChange: (value: string) => void;
 }
 
 export interface ShaderMaterialProps {
-  uniforms: Uniforms;
-  vertexShader: string;
-  fragmentShader: string;
+	uniforms: Uniforms;
+	vertexShader: string;
+	fragmentShader: string;
 }
 
 export interface ModelConfig {
-  id: string;
-  name: string;
-  address: string;
-  model: string;
-  apiKey: string;
+	id: string;
+	name: string;
+	address: string;
+	model: string;
+	apiKey: string;
 }
 
 export interface ChatDrawerProps {
-  isOpen: boolean;
-  onToggle: () => void;
-  messages: Message[];
-  onSendMessage: (message: string) => void;
-  inputMessage: string;
-  setInputMessage: (value: string) => void;
-  models: ModelConfig[];
-  setModels: (models: ModelConfig[]) => void;
-  selectedModel: string;
-  setSelectedModel: (model: string) => void;
+	isOpen: boolean;
+	onToggle: () => void;
+	messages: Message[];
+	onSendMessage: (message: string) => void;
+	inputMessage: string;
+	setInputMessage: (value: string) => void;
+	models: ModelConfig[];
+	setModels: (models: ModelConfig[]) => void;
+	selectedModel: string;
+	setSelectedModel: (model: string) => void;
 }

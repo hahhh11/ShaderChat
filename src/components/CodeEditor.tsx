@@ -114,6 +114,16 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ id, defaultValue, onChange }) =
     };
   }, [id]); // 只在id变化时重新初始化编辑器
   
+  // 监听defaultValue变化，更新编辑器内容
+  useEffect(() => {
+    if (editorRef.current && defaultValue !== undefined) {
+      const currentValue = editorRef.current.getValue();
+      if (currentValue !== defaultValue) {
+        editorRef.current.setValue(defaultValue, -1); // 使用-1保持光标位置不变
+      }
+    }
+  }, [defaultValue]);
+  
   const resizeEditor = () => {
     if (editorRef.current) {
       editorRef.current.resize();
