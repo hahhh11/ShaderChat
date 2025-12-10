@@ -25,6 +25,9 @@ dependencies:
     version: 0.160.0
 
 devDependencies:
+  '@types/node':
+    specifier: ^24.10.2
+    version: 24.10.2
   '@types/react':
     specifier: ^18.2.15
     version: 18.2.15
@@ -54,7 +57,7 @@ devDependencies:
     version: 5.9.3
   vite:
     specifier: ^4.4.5
-    version: 4.5.2
+    version: 4.5.2(@types/node@24.10.2)
 
 packages:
 
@@ -702,6 +705,12 @@ packages:
     resolution: {integrity: sha512-AX22jp8Y7wwaBgAixaSvkoG4M/+PlAcm3Qs4OW8yT9DM4xUpWKeFhLueTAyZF39pviAdcDdeJoACapiAceqNcw==}
     dev: false
 
+  /@types/node@24.10.2:
+    resolution: {integrity: sha512-WOhQTZ4G8xZ1tjJTvKOpyEVSGgOTvJAfDK3FNFgELyaTpzhdgHVHeqW8V+UJvzF5BT+/B54T/1S2K6gd9c7bbA==}
+    dependencies:
+      undici-types: 7.16.0
+    dev: true
+
   /@types/offscreencanvas@2019.7.3:
     resolution: {integrity: sha512-ieXiYmgSRXUDeOntE1InxjWyvEelZGP63M+cGuquuRLuIKKT1osnkXjxev9B7d1nXSug5vpunx+gNlbVxMlC9A==}
     dev: false
@@ -779,7 +788,7 @@ packages:
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.5)
       '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.5)
       react-refresh: 0.14.2
-      vite: 4.5.2
+      vite: 4.5.2(@types/node@24.10.2)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -2701,6 +2710,10 @@ packages:
       which-boxed-primitive: 1.1.1
     dev: true
 
+  /undici-types@7.16.0:
+    resolution: {integrity: sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw==}
+    dev: true
+
   /update-browserslist-db@1.2.2(browserslist@4.28.1):
     resolution: {integrity: sha512-E85pfNzMQ9jpKkA7+TJAi4TJN+tBCuWh5rUcS/sv6cFi+1q9LYDwDI5dpUL0u/73EElyQ8d3TEaeW4sPedBqYA==}
     hasBin: true
@@ -2728,7 +2741,7 @@ packages:
     hasBin: true
     dev: false
 
-  /vite@4.5.2:
+  /vite@4.5.2(@types/node@24.10.2):
     resolution: {integrity: sha512-tBCZBNSBbHQkaGyhGCDUGqeo2ph8Fstyp6FMSvTtsXeZSPpSMGlviAOav2hxVTqFcx8Hj/twtWKsMJXNY0xI8w==}
     engines: {node: ^14.18.0 || >=16.0.0}
     hasBin: true
@@ -2756,6 +2769,7 @@ packages:
       terser:
         optional: true
     dependencies:
+      '@types/node': 24.10.2
       esbuild: 0.18.20
       postcss: 8.5.6
       rollup: 3.29.5
