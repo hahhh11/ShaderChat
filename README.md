@@ -68,19 +68,11 @@ pnpm build
 - **聊天面板**: 底部AI对话界面，支持智能引用
 - **导航栏**: 顶部模型选择和功能菜单
 
-## 🔧 配置说明
-
-### AI模型配置
-支持以下AI模型：
-- GPT-4系列（gpt-4, gpt-4-turbo）
-- Claude系列（claude-3-opus, claude-3-sonnet）
-- Gemini系列（gemini-pro, gemini-1.5-pro）
-
-### 环境变量
-```env
-VITE_API_URL=your_api_endpoint
-VITE_API_KEY=your_api_key
-```
+## TODO
+- [ ] 完善unifroms类型及取值
+- [ ] 直接应用大模型返回的shader代码
+- [ ] diff大模型返回和现有shader的差异
+- [ ] 历史对话记录及shader代码保存
 
 ## 🤝 贡献指南
 
