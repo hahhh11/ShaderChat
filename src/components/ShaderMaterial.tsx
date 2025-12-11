@@ -17,9 +17,10 @@ interface ShaderMaterialProps {
   uniforms: Uniforms;
   vertexShader: string;
   fragmentShader: string;
+  shape?: 'plane' | 'cube' | 'sphere';
 }
 
-const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader, fragmentShader }) => {
+const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader, fragmentShader, shape = 'plane' }) => {
   // 使用useRef来存储材质引用，避免重复创建
   const materialRef = useRef<THREE.ShaderMaterial | null>(null);
   
@@ -65,9 +66,22 @@ const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader,
     }
   });
 
+  // 根据形状选择几何体
+  const geometry = useMemo(() => {
+    switch (shape) {
+      case 'cube':
+        return <boxGeometry args={[0.8, 0.8, 0.8]} />;
+      case 'sphere':
+        return <sphereGeometry args={[0.7, 32, 32]} />;
+      case 'plane':
+      default:
+        return <planeGeometry args={[1.3, 1.3]} />;
+    }
+  }, [shape]);
+
   return (
     <mesh>
-      <planeGeometry args={[2, 2]} />
+      {geometry}
       <primitive object={material} attach="material" />
     </mesh>
   );
