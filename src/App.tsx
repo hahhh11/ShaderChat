@@ -60,6 +60,9 @@ function App() {
   // 控制面板显示状态
   const [showUniformControls, setShowUniformControls] = useState<boolean>(true);
   
+  // 形状切换状态
+  const [currentShape, setCurrentShape] = useState<'plane' | 'cube' | 'sphere'>('plane');
+  
   // 画布尺寸引用
   const canvasRef = useRef<HTMLDivElement>(null);
   
@@ -746,13 +749,49 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
               </button>
             </div>
             <div id="shader-canvas" ref={canvasRef}>
+              {/* 形状切换按钮 - 浮动到canvas上方 */}
+              <div className="shape-controls">
+                <button 
+                  className={`shape-btn ${currentShape === 'plane' ? 'active' : ''}`}
+                  onClick={() => setCurrentShape('plane')}
+                  title="平面"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M2 12h20"/>
+                    <path d="M2 16h20"/>
+                    <path d="M2 20h20"/>
+                    <path d="M2 4h20"/>
+                    <path d="M2 8h20"/>
+                  </svg>
+                </button>
+                <button 
+                  className={`shape-btn ${currentShape === 'cube' ? 'active' : ''}`}
+                  onClick={() => setCurrentShape('cube')}
+                  title="方块"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <rect x="7" y="7" width="10" height="10" rx="1"/>
+                  </svg>
+                </button>
+                <button 
+                  className={`shape-btn ${currentShape === 'sphere' ? 'active' : ''}`}
+                  onClick={() => setCurrentShape('sphere')}
+                  title="球体"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9"/>
+                    <ellipse cx="12" cy="12" rx="9" ry="4"/>
+                  </svg>
+                </button>
+              </div>
               <Canvas resize={{ scroll: false }} style={{ width: '100%', height: '100%' }} gl={{ preserveDrawingBuffer: true }}>
                 <PerspectiveCamera makeDefault position={[0, 0, 2]} />
                 <OrbitControls 
                   enableDamping 
                   dampingFactor={0.05} 
                   minDistance={1} 
-                  maxDistance={5} 
+                  maxDistance={4} 
                   enableZoom={false} 
                 />
                 <ambientLight intensity={0.5} />
@@ -760,6 +799,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
                   uniforms={uniforms} 
                   vertexShader={vertexShader} 
                   fragmentShader={fragmentShader} 
+                  shape={currentShape}
                 />
               </Canvas>
               
