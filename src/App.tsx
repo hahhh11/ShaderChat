@@ -13,9 +13,11 @@ import {
   sampler2DFragmentShader,
   discoverUniformNames,
   setupUniforms,
+  areUniformValuesEqual,
   useModels,
   ColorPicker
 } from './components';
+import { debounce } from './utils/debounce';
 import './App.css';
 
 // 自定义CSS属性类型声明
@@ -232,15 +234,26 @@ function App() {
   
 
   
-  // 使用防抖机制处理Fragment Shader变化
+  // 处理Fragment Shader变化 - 使用防抖避免频繁更新
   const handleFragmentShaderChange = useCallback((newFragmentShader: string) => {
     setFragmentShader(newFragmentShader);
-    // 延迟uniforms更新，避免频繁重新渲染
-    setTimeout(() => {
-      const uniformNames = discoverUniformNames(newFragmentShader);
-      setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms, newFragmentShader);
-    }, 100);
-  }, [customUniforms, uniforms]);
+  }, []);
+
+  // 防抖处理uniform更新 - 避免打字时频繁重置
+  const debouncedUniformUpdate = useCallback(
+    debounce((shader: string) => {
+      const uniformNames = discoverUniformNames(shader);
+      setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms, shader);
+    }, 500), // 500ms防抖延迟
+    [customUniforms, uniforms]
+  );
+
+  // 监听fragmentShader变化，使用防抖更新uniforms
+  useEffect(() => {
+    if (fragmentShader) {
+      debouncedUniformUpdate(fragmentShader);
+    }
+  }, [fragmentShader, debouncedUniformUpdate]);
   
   // 在CodeEditor组件中使用
   const handleFragmentShaderChangeWrapper = (newFragmentShader: string) => {
@@ -251,7 +264,7 @@ function App() {
   useEffect(() => {
     const uniformNames = discoverUniformNames(fragmentShader);
     setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms, fragmentShader);
-  }, [fragmentShader]); // 移除customUniforms依赖，避免循环更新
+  }, [fragmentShader]); // 只在fragmentShader变化时调用，避免不必要的重新执行
   
   // 更新iResolution
   // useEffect(() => {
@@ -274,9 +287,10 @@ function App() {
   // 更新Uniform值 - 优化性能，避免重复设置相同值
   const updateUniformValue = useCallback((name: string, value: number): void => {
     setCustomUniforms(prev => {
+      console.log('更新Uniform值:', prev,name, value);
       const currentValue = prev[name]?.value;
-      // 只在值真正变化时更新
-      if (currentValue === value) return prev;
+      // 使用精确的值比较，只在值真正变化时更新
+      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value }
@@ -285,8 +299,8 @@ function App() {
     
     setUniforms(prev => {
       const currentValue = prev[name]?.value;
-      // 只在值真正变化时更新
-      if (currentValue === value) return prev;
+      // 使用精确的值比较，只在值真正变化时更新
+      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value }
@@ -298,11 +312,8 @@ function App() {
   const updateVec3UniformValue = useCallback((name: string, value: { r: number; g: number; b: number }): void => {
     setCustomUniforms(prev => {
       const currentValue = prev[name]?.value as { r: number; g: number; b: number } | null | undefined;
-      // 只在值真正变化时更新
-      if (currentValue && 
-          currentValue.r === value.r && 
-          currentValue.g === value.g && 
-          currentValue.b === value.b) return prev;
+      // 使用精确的值比较，只在值真正变化时更新
+      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value, type: 'vec3' }
@@ -311,11 +322,8 @@ function App() {
     
     setUniforms(prev => {
       const currentValue = prev[name]?.value as { r: number; g: number; b: number } | null | undefined;
-      // 只在值真正变化时更新
-      if (currentValue && 
-          currentValue.r === value.r && 
-          currentValue.g === value.g && 
-          currentValue.b === value.b) return prev;
+      // 使用精确的值比较，只在值真正变化时更新
+      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value, type: 'vec3' }
@@ -327,12 +335,8 @@ function App() {
   const updateVec4UniformValue = useCallback((name: string, value: { r: number; g: number; b: number; a: number }): void => {
     setCustomUniforms(prev => {
       const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number } | null | undefined;
-      // 只在值真正变化时更新
-      if (currentValue && 
-          currentValue.r === value.r && 
-          currentValue.g === value.g && 
-          currentValue.b === value.b && 
-          currentValue.a === value.a) return prev;
+      // 使用精确的值比较，只在值真正变化时更新
+      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value, type: 'vec4' }
@@ -341,12 +345,8 @@ function App() {
     
     setUniforms(prev => {
       const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number } | null | undefined;
-      // 只在值真正变化时更新
-      if (currentValue && 
-          currentValue.r === value.r && 
-          currentValue.g === value.g && 
-          currentValue.b === value.b && 
-          currentValue.a === value.a) return prev;
+      // 使用精确的值比较，只在值真正变化时更新
+      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value, type: 'vec4' }
@@ -362,15 +362,25 @@ function App() {
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
-        setCustomUniforms(prev => ({
-          ...prev,
-          [name]: { value: img, type: 'sampler2D' }
-        }));
+        setCustomUniforms(prev => {
+          const currentValue = prev[name]?.value;
+          // 使用精确的值比较，只在值真正变化时更新
+          if (areUniformValuesEqual(currentValue, img)) return prev;
+          return {
+            ...prev,
+            [name]: { value: img, type: 'sampler2D' }
+          };
+        });
         
-        setUniforms(prev => ({
-          ...prev,
-          [name]: { value: img, type: 'sampler2D' }
-        }));
+        setUniforms(prev => {
+          const currentValue = prev[name]?.value;
+          // 使用精确的值比较，只在值真正变化时更新
+          if (areUniformValuesEqual(currentValue, img)) return prev;
+          return {
+            ...prev,
+            [name]: { value: img, type: 'sampler2D' }
+          };
+        });
       };
       img.src = e.target?.result as string;
     };
@@ -891,7 +901,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
               const isVec3 = uniform.type === 'vec3' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value));
               const isVec4 = uniform.type === 'vec4' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value);
               const isSampler2D = uniform.type === 'sampler2D' || uniform.value instanceof HTMLImageElement;
-              
+              console.log('uniform:', uniform.value, uniform.type);
               if (isSampler2D) {
                 return (
                   <div key={name} className="uniform-control sampler2d-control">

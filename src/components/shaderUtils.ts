@@ -68,7 +68,7 @@ export const setupUniforms = (
 	const newCustomUniforms = { ...customUniforms };
 	let hasChanges = false;
 
-	// 添加或初始化新的Uniforms
+	// 添加或初始化新的Uniforms，但保留同名uniform的现有值
 	uniformNames.forEach((name) => {
 		if (!(name in newCustomUniforms)) {
 			// 根据uniform类型设置默认值
@@ -102,11 +102,49 @@ export const setupUniforms = (
 			}
 			hasChanges = true;
 		}
+		// 如果uniform已存在，保留现有的值和类型，但确保类型信息正确
+		else if (fragmentShader) {
+			const uniformType = getUniformType(fragmentShader, name);
+			const currentUniform = newCustomUniforms[name];
+
+			// 只有当类型信息缺失或不正确时才更新
+			if (!currentUniform.type || currentUniform.type !== uniformType) {
+				// 如果类型相同或值兼容，保留现有值，只更新类型信息
+				if (areUniformValuesCompatible(currentUniform.value, uniformType)) {
+					newCustomUniforms[name] = {
+						...currentUniform,
+						type: uniformType,
+					};
+				} else {
+					// 如果类型不兼容，需要重新初始化值
+					if (uniformType === "vec3") {
+						newCustomUniforms[name] = {
+							value: { r: 1, g: 1, b: 1 },
+							type: "vec3",
+						};
+					} else if (uniformType === "vec4") {
+						newCustomUniforms[name] = {
+							value: { r: 1, g: 1, b: 1, a: 1 },
+							type: "vec4",
+						};
+					} else if (uniformType === "sampler2D") {
+						newCustomUniforms[name] = {
+							value: null,
+							type: "sampler2D",
+						};
+					} else {
+						newCustomUniforms[name] = { value: 0.5, type: "float" };
+					}
+				}
+				hasChanges = true;
+			}
+			// 如果类型已经正确，不做任何修改
+		}
 	});
 
 	// 删除不再需要的Uniforms
 	Object.keys(newCustomUniforms).forEach((name) => {
-		if (!uniformNames.includes(name)) {
+		if (!uniformNames.includes(name) && name !== "iTime" && name !== "iResolution") {
 			delete newCustomUniforms[name];
 			hasChanges = true;
 		}
@@ -128,4 +166,55 @@ export const setupUniforms = (
 
 		setUniforms(mergedUniforms);
 	}
+};
+
+/**
+ * 检查uniform值是否与目标类型兼容
+ * 用于判断是否可以保留现有值而只更新类型信息
+ */
+export const areUniformValuesCompatible = (value: any, targetType: string): boolean => {
+	if (value === null || value === undefined) return true; // null值总是兼容
+
+	switch (targetType) {
+		case "float":
+			return typeof value === "number";
+		case "vec3":
+			return typeof value === "object" && "r" in value && "g" in value && "b" in value && Object.keys(value).length === 3;
+		case "vec4":
+			return typeof value === "object" && "r" in value && "g" in value && "b" in value && "a" in value && Object.keys(value).length === 4;
+		case "sampler2D":
+			return value instanceof HTMLImageElement || value === null;
+		default:
+			return false;
+	}
+};
+
+/**
+ * 比较两个uniform值是否相等
+ * 用于判断是否需要更新uniform值
+ */
+export const areUniformValuesEqual = (a: any, b: any): boolean => {
+	// 处理null/undefined情况
+	if (a === b) return true;
+	if (a == null || b == null) return false;
+
+	// 处理HTMLImageElement（图片）
+	if (a instanceof HTMLImageElement && b instanceof HTMLImageElement) {
+		return a.src === b.src;
+	}
+
+	// 处理对象（vec3/vec4）
+	if (typeof a === "object" && typeof b === "object") {
+		const keysA = Object.keys(a);
+		const keysB = Object.keys(b);
+		if (keysA.length !== keysB.length) return false;
+
+		for (const key of keysA) {
+			if (a[key] !== b[key]) return false;
+		}
+		return true;
+	}
+
+	// 处理基本类型
+	return a === b;
 };

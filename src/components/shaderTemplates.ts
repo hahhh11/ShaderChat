@@ -6,7 +6,6 @@
  * @FilePath: /ShaderChat/src/components/shaderTemplates.ts
  */
 export const defaultVertexShader = `
-uniform float u_scale; // 示例 uniform
 varying vec2 vUv;
 void main() {
     vUv = uv;

@@ -11,7 +11,7 @@ export { default as ColorPicker } from "./ColorPicker";
 
 // 导出工具函数和常量
 export { defaultVertexShader, defaultFragmentShader, vec3ColorFragmentShader, sampler2DFragmentShader } from "./shaderTemplates";
-export { discoverUniformNames, setupUniforms } from "./shaderUtils";
+export { discoverUniformNames, setupUniforms, areUniformValuesEqual } from "./shaderUtils";
 export * from "../utils/storage";
 
 // 导出类型定义
