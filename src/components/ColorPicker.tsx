@@ -2,7 +2,7 @@
  * @Author: 98Precent
  * @Date: 2025-12-10 12:48:11
  * @LastEditors: Do not edit
- * @LastEditTime: 2025-12-10 13:38:53
+ * @LastEditTime: 2025-12-11 17:16:24
  * @FilePath: /ShaderChat/src/components/ColorPicker.tsx
  */
 import React, { useRef } from 'react';
@@ -54,16 +54,6 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ color, onChange, showAlpha = 
     <div className="color-picker-container" ref={pickerRef}>      
         <div className="color-picker-panel">
           <div className="color-picker-content">
-            {/* 颜色预览 */}
-            <div 
-              className="color-preview-large"
-              style={{ 
-                backgroundColor: showAlpha 
-                  ? `rgba(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)}, ${color.a || 1})`
-                  : `rgb(${Math.round(color.r * 255)}, ${Math.round(color.g * 255)}, ${Math.round(color.b * 255)})`
-              }}
-            />
-            
             {/* 十六进制输入 */}
             <div className="color-input-group">
               <input

@@ -11,7 +11,7 @@ interface NavigationBarProps {
   onLoadVec3Shader?: () => void;
 }
 
-const NavigationBar: React.FC<NavigationBarProps> = ({ onLoadVec3Shader }) => {
+const NavigationBar: React.FC<NavigationBarProps> = () => {
   return (
     <nav className="navigation-bar">
       <div className="nav-brand">

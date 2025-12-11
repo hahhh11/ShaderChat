@@ -1,13 +1,15 @@
 import { Uniforms } from "./types";
 
-export const getUniformType = (fsSource: string, uniformName: string): "float" | "vec3" | "vec4" => {
+export const getUniformType = (fsSource: string, uniformName: string): "float" | "vec3" | "vec4" | "sampler2D" => {
 	const floatRegex = new RegExp(`uniform\\s+float\\s+${uniformName};`);
 	const vec3Regex = new RegExp(`uniform\\s+vec3\\s+${uniformName};`);
 	const vec4Regex = new RegExp(`uniform\\s+vec4\\s+${uniformName};`);
+	const sampler2DRegex = new RegExp(`uniform\\s+sampler2D\\s+${uniformName};`);
 
 	if (floatRegex.test(fsSource)) return "float";
 	if (vec3Regex.test(fsSource)) return "vec3";
 	if (vec4Regex.test(fsSource)) return "vec4";
+	if (sampler2DRegex.test(fsSource)) return "sampler2D";
 	return "float"; // 默认返回float
 };
 
@@ -15,6 +17,7 @@ export const discoverUniformNames = (fsSource: string): string[] => {
 	const floatRegex = /uniform\s+float\s+([a-zA-Z_]\w*);/g;
 	const vec3Regex = /uniform\s+vec3\s+([a-zA-Z_]\w*);/g;
 	const vec4Regex = /uniform\s+vec4\s+([a-zA-Z_]\w*);/g;
+	const sampler2DRegex = /uniform\s+sampler2D\s+([a-zA-Z_]\w*);/g;
 	let match;
 	const names = new Set<string>();
 	const excluded = ["iTime", "iResolution", "projectionMatrix", "modelViewMatrix", "viewMatrix", "normalMatrix", "cameraPosition"];
@@ -37,6 +40,14 @@ export const discoverUniformNames = (fsSource: string): string[] => {
 
 	// 检测vec4 uniforms
 	while ((match = vec4Regex.exec(fsSource)) !== null) {
+		const name = match[1];
+		if (!excluded.includes(name)) {
+			names.add(name);
+		}
+	}
+
+	// 检测sampler2D uniforms
+	while ((match = sampler2DRegex.exec(fsSource)) !== null) {
 		const name = match[1];
 		if (!excluded.includes(name)) {
 			names.add(name);
@@ -74,6 +85,12 @@ export const setupUniforms = (
 					newCustomUniforms[name] = {
 						value: { r: 1, g: 1, b: 1, a: 1 },
 						type: "vec4",
+					};
+				} else if (uniformType === "sampler2D") {
+					// sampler2D uniform 默认值为null
+					newCustomUniforms[name] = {
+						value: null,
+						type: "sampler2D",
 					};
 				} else {
 					// float uniform 默认值为0.5

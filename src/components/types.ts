@@ -1,6 +1,13 @@
 export interface UniformValue {
-	value: number | { x: number; y: number; z?: number } | { r: number; g: number; b: number } | { r: number; g: number; b: number; a: number };
-	type?: "float" | "vec2" | "vec3" | "color" | "vec4";
+	value:
+		| number
+		| { x: number; y: number; z?: number }
+		| { r: number; g: number; b: number }
+		| { r: number; g: number; b: number; a: number }
+		| HTMLImageElement
+		| ImageData
+		| null;
+	type?: "float" | "vec2" | "vec3" | "color" | "vec4" | "sampler2D";
 }
 
 export interface Uniforms {

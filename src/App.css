@@ -154,6 +154,13 @@ body.resizing {
     background-color: #333;
 }
 
+/* 面板头部控制区域 */
+.panel-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 /* 折叠按钮样式 */
 .collapse-btn {
     float: right;
@@ -1440,6 +1447,398 @@ body.resizing * {
     box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2),
                 0 1px 4px rgba(0, 122, 204, 0.3);
 }
+
+
+/* Color Picker Container - Modern Glassmorphic Design */
+.color-picker-container {
+    position: relative;
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 122, 204, 0.2);
+    padding: 16px;
+    margin: 8px 0;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 
+        0 8px 32px rgba(0, 122, 204, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: float 3s ease-in-out infinite;
+}
+
+.color-picker-container:hover {
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.15) 0%, rgba(0, 153, 255, 0.08) 100%);
+    border-color: rgba(0, 122, 204, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 
+        0 12px 40px rgba(0, 122, 204, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.color-picker-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.color-picker-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Color Preview - Large Circular Design */
+.color-preview-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        0 8px 24px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.1),
+        0 0 0 2px rgba(0, 122, 204, 0.3);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.color-preview-large::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: rotate(45deg);
+    transition: all 0.6s ease;
+    opacity: 0;
+}
+
+.color-preview-large:hover {
+    transform: scale(1.05) rotate(5deg);
+    box-shadow: 
+        0 12px 32px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.15),
+        0 0 0 3px rgba(0, 122, 204, 0.4);
+}
+
+.color-preview-large:hover::before {
+    opacity: 1;
+    transform: rotate(45deg) translate(50%, 50%);
+}
+
+/* Color Input Group - Modern Design */
+.color-input-hex {
+    width: 60px;
+    height: 40px;
+    border: 2px solid rgba(0, 122, 204, 0.3);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.color-input-hex:hover {
+    border-color: rgba(0, 122, 204, 0.5);
+    transform: scale(1.1);
+    box-shadow: 
+        0 6px 20px rgba(0, 122, 204, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.15);
+}
+
+.color-input-hex::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-input-hex::-webkit-color-swatch {
+    border: none;
+    border-radius: 10px;
+}
+
+/* Alpha Slider - Enhanced Design */
+.alpha-slider {
+    height: 8px !important;
+    border-radius: 4px !important;
+    background: linear-gradient(to right, 
+        rgba(0, 122, 204, 0) 0%, 
+        rgba(0, 122, 204, 1) 100%) !important;
+    border: 1px solid rgba(0, 122, 204, 0.3) !important;
+    position: relative;
+}
+
+.alpha-slider::before {
+    background: linear-gradient(to right, 
+        transparent 0%, 
+        rgba(0, 122, 204, 1) 100%) !important;
+}
+
+.alpha-slider::-webkit-slider-thumb {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%) !important;
+    border: 2px solid rgba(0, 122, 204, 0.8) !important;
+    box-shadow: 
+        0 2px 8px rgba(0, 122, 204, 0.4),
+        0 0 0 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+.alpha-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.4) !important;
+    box-shadow: 
+        0 4px 16px rgba(0, 122, 204, 0.5),
+        0 0 0 3px rgba(255, 255, 255, 0.9) !important;
+}
+
+
+/* sampler2D 控制专用样式 */
+.uniform-control.sampler2d-control {
+    box-shadow: 
+        0 4px 20px rgba(0, 122, 204, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.uniform-control.sampler2d-control:hover {
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.12) 0%, rgba(0, 122, 204, 0.08) 100%);
+    border-color: rgba(0, 122, 204, 0.35);
+    box-shadow: 
+        0 6px 24px rgba(0, 122, 204, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.uniform-control.sampler2d-control label {
+    color: #9cb3c9;
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(0, 122, 204, 0.3);
+}
+
+/* 图片上传容器样式 - 现代化设计 */
+.image-upload-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-2px); }
+}
+
+.image-upload-container.drag-over {
+    border-color: rgba(0, 122, 204, 0.8);
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.2) 0%, rgba(0, 153, 255, 0.1) 100%);
+    transform: scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 122, 204, 0.3);
+}
+
+.image-upload-container.has-image {
+    border-style: solid;
+    border-color: rgba(0, 122, 204, 0.6);
+}
+
+.image-upload-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.image-upload-container:hover::before {
+    left: 100%;
+}
+
+.image-upload-container:hover {
+    border-color: rgba(0, 122, 204, 0.6);
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.15) 0%, rgba(0, 153, 255, 0.08) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0, 122, 204, 0.2);
+}
+
+.image-preview {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.image-preview:hover {
+    transform: scale(1.02);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}
+
+.image-preview.has-image {
+    box-shadow: 0 8px 24px rgba(0, 122, 204, 0.3), 0 0 20px rgba(0, 122, 204, 0.2);
+}
+
+.image-preview.has-image:hover {
+    box-shadow: 0 12px 32px rgba(0, 122, 204, 0.4), 0 0 30px rgba(0, 122, 204, 0.3);
+}
+
+.image-preview img {
+    border-radius: 10px;
+    max-width: 120px;
+    max-height: 120px;
+    object-fit: cover;
+    transition: all 0.3s ease;
+}
+
+.image-preview:hover img {
+    filter: brightness(1.1) contrast(1.1);
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.remove-image-btn:hover {
+    background: linear-gradient(135deg, #ff5252 0%, #ff1744 100%);
+    transform: scale(1.15) rotate(90deg);
+    box-shadow: 0 6px 16px rgba(244, 67, 54, 0.5);
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    padding: 30px 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.upload-placeholder::before {
+    content: '🖼️';
+    font-size: 32px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-5px); }
+    60% { transform: translateY(-3px); }
+}
+
+.upload-placeholder:hover {
+    color: rgba(255, 255, 255, 0.8);
+    border-color: rgba(0, 122, 204, 0.4);
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.upload-button {
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.9) 0%, rgba(0, 153, 255, 0.9) 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 20px rgba(0, 122, 204, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.upload-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.upload-button:hover::before {
+    left: 100%;
+}
+
+.upload-button:hover {
+    background: linear-gradient(135deg, rgba(0, 122, 204, 1) 0%, rgba(0, 153, 255, 1) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(0, 122, 204, 0.4);
+}
+
+.upload-button:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 16px rgba(0, 122, 204, 0.3);
+}
+
+.upload-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 16px rgba(0, 122, 204, 0.2);
+}
+
+/* 上传状态指示器 */
+.upload-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #4caf50;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
 
 /* 响应式设计 */
 @media (max-width: 1200px) {

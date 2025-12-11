@@ -10,7 +10,7 @@ import {
   Message,
   ModelConfig,
   defaultVertexShader,
-  defaultFragmentShader,
+  sampler2DFragmentShader,
   discoverUniformNames,
   setupUniforms,
   useModels,
@@ -32,12 +32,12 @@ declare module 'react' {
 
 // 主应用组件
 function App() {
-  // 状态管理
+  // 状态管理 - 默认使用纹理采样模板
   const [vertexShader, setVertexShader] = useState<string>(defaultVertexShader);
-  const [fragmentShader, setFragmentShader] = useState<string>(defaultFragmentShader);
+  const [fragmentShader, setFragmentShader] = useState<string>(sampler2DFragmentShader);
   const [uniforms, setUniforms] = useState<Uniforms>({
     iTime: { value: 0.0 },
-    iResolution: { value: { x: 0, y: 0 } }
+    iResolution: { value: { x: 1, y: 1 } }
   });
   const [customUniforms, setCustomUniforms] = useState<Uniforms>({} as Uniforms);
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
@@ -51,6 +51,11 @@ function App() {
   // 确保ChatDrawer默认关闭
   useEffect(() => {
     setIsChatOpen(false);
+  }, []);
+
+  // 组件挂载时自动加载纹理采样模板
+  useEffect(() => {
+    loadTextureSamplingTemplate();
   }, []);
   
   // 可调整宽度状态
@@ -88,6 +93,12 @@ function App() {
       }
       setParsedResponse(null); // 清除解析结果
     }
+  };
+
+  // 加载纹理采样模板
+  const loadTextureSamplingTemplate = () => {
+    setVertexShader(defaultVertexShader);
+    setFragmentShader(sampler2DFragmentShader);
   };
 
   // 生成diff比较函数已移除
@@ -286,7 +297,7 @@ function App() {
   // 更新vec3 Uniform值 - 优化性能，避免重复设置相同值
   const updateVec3UniformValue = useCallback((name: string, value: { r: number; g: number; b: number }): void => {
     setCustomUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number };
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number } | null | undefined;
       // 只在值真正变化时更新
       if (currentValue && 
           currentValue.r === value.r && 
@@ -299,7 +310,7 @@ function App() {
     });
     
     setUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number };
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number } | null | undefined;
       // 只在值真正变化时更新
       if (currentValue && 
           currentValue.r === value.r && 
@@ -315,7 +326,7 @@ function App() {
   // 更新vec4 Uniform值 - 优化性能，避免重复设置相同值
   const updateVec4UniformValue = useCallback((name: string, value: { r: number; g: number; b: number; a: number }): void => {
     setCustomUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number };
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number } | null | undefined;
       // 只在值真正变化时更新
       if (currentValue && 
           currentValue.r === value.r && 
@@ -329,7 +340,7 @@ function App() {
     });
     
     setUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number };
+      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number } | null | undefined;
       // 只在值真正变化时更新
       if (currentValue && 
           currentValue.r === value.r && 
@@ -342,6 +353,52 @@ function App() {
       };
     });
   }, []);
+
+  // 处理图片上传
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleImageUpload = useCallback((name: string, file: File): void => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        setCustomUniforms(prev => ({
+          ...prev,
+          [name]: { value: img, type: 'sampler2D' }
+        }));
+        
+        setUniforms(prev => ({
+          ...prev,
+          [name]: { value: img, type: 'sampler2D' }
+        }));
+      };
+      img.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent, name: string) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      const file = files[0];
+      if (file.type.startsWith('image/')) {
+        handleImageUpload(name, file);
+      }
+    }
+  };
   
   // 动画循环 - 移除iTime更新，由ShaderMaterial内部处理
   useEffect(() => {
@@ -740,13 +797,15 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
           <div id="preview-panel">
             <div className="panel-header">
               PREVIEW
-              <button 
+              <div className="panel-header-controls">
+                <button 
                 className={`controls-toggle-btn ${showUniformControls ? 'active' : ''}`}
                 onClick={toggleUniformControls}
                 title={showUniformControls ? "隐藏控制面板" : "显示控制面板"}
               >
                 Uniforms
               </button>
+              </div>
             </div>
             <div id="shader-canvas" ref={canvasRef}>
               {/* 形状切换按钮 - 浮动到canvas上方 */}
@@ -829,8 +888,70 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
           <div id="uniforms-controls">
             {Object.keys(customUniforms).map(name => {
               const uniform = customUniforms[name];
-              const isVec3 = uniform.type === 'vec3' || (typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value));
-              const isVec4 = uniform.type === 'vec4' || (typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value);
+              const isVec3 = uniform.type === 'vec3' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value));
+              const isVec4 = uniform.type === 'vec4' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value);
+              const isSampler2D = uniform.type === 'sampler2D' || uniform.value instanceof HTMLImageElement;
+              
+              if (isSampler2D) {
+                return (
+                  <div key={name} className="uniform-control sampler2d-control">
+                    <label>{name}</label>
+                    <div 
+                      className={`image-upload-container ${isDragOver ? 'drag-over' : ''} ${uniform.value ? 'has-image' : ''}`}
+                      onDragOver={handleDragOver}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, name)}
+                    >
+                      {uniform.value ? (
+                        <div className="image-preview has-image">
+                          <img 
+                            src={(uniform.value as HTMLImageElement).src} 
+                            alt={name}
+                            width="120"
+                            height="120"
+                          />
+                          <button 
+                            className="remove-image-btn"
+                            onClick={() => {
+                              setCustomUniforms(prev => ({
+                                ...prev,
+                                [name]: { value: null, type: 'sampler2D' }
+                              }));
+                              setUniforms(prev => ({
+                                ...prev,
+                                [name]: { value: null, type: 'sampler2D' }
+                              }));
+                            }}
+                            title="移除图片"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="upload-placeholder">
+                          <div>拖拽图片到此处</div>
+                          <div style={{ fontSize: '12px', opacity: 0.7 }}>或点击按钮选择</div>
+                        </div>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            handleImageUpload(name, file);
+                          }
+                        }}
+                        style={{ display: 'none' }}
+                        id={`image-upload-${name}`}
+                      />
+                      <label htmlFor={`image-upload-${name}`} className="upload-button">
+                        选择图片
+                      </label>
+                    </div>
+                  </div>
+                );
+              }
               
               if (isVec3 || isVec4) {
                 return (
@@ -838,8 +959,8 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
                     <label>{name}</label>
                     <ColorPicker
                       color={isVec3 ? 
-                        { r: (uniform.value as { r: number; g: number; b: number }).r, g: (uniform.value as { r: number; g: number; b: number }).g, b: (uniform.value as { r: number; g: number; b: number }).b } :
-                        uniform.value as { r: number; g: number; b: number; a: number }
+                        { r: (uniform.value as { r: number; g: number; b: number })?.r || 0, g: (uniform.value as { r: number; g: number; b: number })?.g || 0, b: (uniform.value as { r: number; g: number; b: number })?.b || 0 } :
+                        (uniform.value as { r: number; g: number; b: number; a: number }) || { r: 0, g: 0, b: 0, a: 1 }
                       }
                       onChange={(color) => isVec3 ? 
                         updateVec3UniformValue(name, { r: color.r, g: color.g, b: color.b }) :

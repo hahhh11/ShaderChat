@@ -1,17 +1,7 @@
 import React, { useMemo, useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-
-interface UniformValue {
-  value: number | { x: number; y: number; z?: number } | { r: number; g: number; b: number } | { r: number; g: number; b: number; a: number };
-  type?: 'float' | 'vec2' | 'vec3' | 'color' | 'vec4';
-}
-
-interface Uniforms {
-  [key: string]: UniformValue;
-  iTime: { value: number };
-  iResolution: { value: { x: number; y: number; z?: number } };
-}
+import { Uniforms } from './types';
 
 interface ShaderMaterialProps {
   uniforms: Uniforms;
@@ -42,8 +32,23 @@ const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader,
       Object.keys(uniforms).forEach(key => {
         if (materialRef.current!.uniforms[key]) {
           const uniform = uniforms[key];
+          
+          // 处理null值
+          if (uniform.value === null) {
+            materialRef.current!.uniforms[key].value = null;
+            return;
+          }
+          
+          // 处理sampler2D类型 - 转换为THREE.Texture
+          if (uniform.type === 'sampler2D' || uniform.value instanceof HTMLImageElement) {
+            if (uniform.value instanceof HTMLImageElement) {
+              const texture = new THREE.Texture(uniform.value);
+              texture.needsUpdate = true;
+              materialRef.current!.uniforms[key].value = texture;
+            }
+          }
           // 处理vec3类型 - 转换为THREE.Vector3
-          if (uniform.type === 'vec3' || (typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value))) {
+          else if (uniform.type === 'vec3' || (typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value))) {
             const color = uniform.value as { r: number; g: number; b: number };
             materialRef.current!.uniforms[key].value = new THREE.Vector3(color.r, color.g, color.b);
           }
@@ -51,7 +56,9 @@ const ShaderMaterial: React.FC<ShaderMaterialProps> = ({ uniforms, vertexShader,
           else if (uniform.type === 'vec4' || (typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value)) {
             const color = uniform.value as { r: number; g: number; b: number; a: number };
             materialRef.current!.uniforms[key].value = new THREE.Vector4(color.r, color.g, color.b, color.a);
-          } else {
+          }
+          // 处理其他类型
+          else {
             materialRef.current!.uniforms[key].value = uniform.value;
           }
         }

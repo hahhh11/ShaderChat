@@ -65,3 +65,32 @@ void main() {
     gl_FragColor = vec4(finalColor, 1.0);
 }
 `;
+
+export const sampler2DFragmentShader = `
+uniform float iTime;
+uniform vec2 iResolution;
+uniform sampler2D uTexture;
+uniform float uTextureIntensity;
+uniform vec3 uTintColor;
+
+varying vec2 vUv;
+
+void main() {
+    vec2 uv = vUv;
+    
+    // 基础颜色
+    vec3 baseColor = 0.5 + 0.5 * cos(iTime + uv.xyx * 6.0 + vec3(0, 2, 4));
+    
+    // 采样纹理
+    vec4 texColor = texture2D(uTexture, uv);
+    
+    // 混合纹理和基础颜色
+    vec3 finalColor = mix(baseColor, texColor.rgb * uTintColor, uTextureIntensity * texColor.a);
+    
+    // 添加一些动态效果
+    finalColor += sin(uv.x * 20.0 + iTime * 2.0) * 0.05;
+    finalColor += cos(uv.y * 15.0 + iTime * 1.5) * 0.05;
+    
+    gl_FragColor = vec4(finalColor, 1.0);
+}
+`;
