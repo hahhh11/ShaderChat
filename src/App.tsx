@@ -259,12 +259,6 @@ function App() {
   const handleFragmentShaderChangeWrapper = (newFragmentShader: string) => {
     handleFragmentShaderChange(newFragmentShader);
   };
-
-  // 编译和链接Shaders - 优化依赖项，避免重复调用
-  useEffect(() => {
-    const uniformNames = discoverUniformNames(fragmentShader);
-    setupUniforms(uniformNames, customUniforms, setCustomUniforms, uniforms, setUniforms, fragmentShader);
-  }, [fragmentShader]); // 只在fragmentShader变化时调用，避免不必要的重新执行
   
   // 更新iResolution
   // useEffect(() => {
@@ -287,23 +281,23 @@ function App() {
   // 更新Uniform值 - 优化性能，避免重复设置相同值
   const updateUniformValue = useCallback((name: string, value: number): void => {
     setCustomUniforms(prev => {
-      console.log('更新Uniform值:', prev,name, value);
       const currentValue = prev[name]?.value;
+      const currentType = prev[name]?.type;
       // 使用精确的值比较，只在值真正变化时更新
       if (areUniformValuesEqual(currentValue, value)) return prev;
-      return {
-        ...prev,
-        [name]: { value }
-      };
+      const newUniforms = { ...prev };
+      newUniforms[name] = { value, type: currentType || 'float' };
+      return newUniforms;
     });
     
     setUniforms(prev => {
       const currentValue = prev[name]?.value;
+      const currentType = prev[name]?.type;
       // 使用精确的值比较，只在值真正变化时更新
       if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
-        [name]: { value }
+        [name]: { value, type: currentType || 'float' }
       };
     });
   }, []);
@@ -901,7 +895,6 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
               const isVec3 = uniform.type === 'vec3' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value));
               const isVec4 = uniform.type === 'vec4' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value);
               const isSampler2D = uniform.type === 'sampler2D' || uniform.value instanceof HTMLImageElement;
-              console.log('uniform:', uniform.value, uniform.type);
               if (isSampler2D) {
                 return (
                   <div key={name} className="uniform-control sampler2d-control">

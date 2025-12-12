@@ -128,10 +128,22 @@ export const setupUniforms = (
 							type: "vec4",
 						};
 					} else if (uniformType === "sampler2D") {
-						newCustomUniforms[name] = {
-							value: null,
-							type: "sampler2D",
-						};
+						// 对于sampler2D类型，如果当前值已经是图片，保留它
+						if (
+							currentUniform.value instanceof HTMLImageElement ||
+							(typeof currentUniform.value === "object" && currentUniform.value !== null && "src" in currentUniform.value)
+						) {
+							newCustomUniforms[name] = {
+								...currentUniform,
+								type: "sampler2D",
+							};
+						} else {
+							// 只有当前值不是图片时才设置为null
+							newCustomUniforms[name] = {
+								value: null,
+								type: "sampler2D",
+							};
+						}
 					} else {
 						newCustomUniforms[name] = { value: 0.5, type: "float" };
 					}
@@ -183,7 +195,8 @@ export const areUniformValuesCompatible = (value: any, targetType: string): bool
 		case "vec4":
 			return typeof value === "object" && "r" in value && "g" in value && "b" in value && "a" in value && Object.keys(value).length === 4;
 		case "sampler2D":
-			return value instanceof HTMLImageElement || value === null;
+			// 更宽松地处理sampler2D兼容性 - 接受HTMLImageElement、有src属性的对象、或者null
+			return value instanceof HTMLImageElement || (typeof value === "object" && value !== null && "src" in value) || value === null || value === undefined;
 		default:
 			return false;
 	}
@@ -200,6 +213,14 @@ export const areUniformValuesEqual = (a: any, b: any): boolean => {
 
 	// 处理HTMLImageElement（图片）
 	if (a instanceof HTMLImageElement && b instanceof HTMLImageElement) {
+		return a.src === b.src;
+	}
+
+	// 处理图片对象比较（一个HTMLImageElement，一个有src属性的对象）
+	if (
+		(a instanceof HTMLImageElement && typeof b === "object" && b !== null && "src" in b) ||
+		(typeof a === "object" && a !== null && "src" in a && b instanceof HTMLImageElement)
+	) {
 		return a.src === b.src;
 	}
 
