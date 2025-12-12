@@ -19,6 +19,8 @@ import {
 } from './components';
 import { debounce } from './utils/debounce';
 import './App.css';
+import './styles/uniform-controls.css'
+import './styles/chat-drawer.css'
 
 // 自定义CSS属性类型声明
 declare module 'react' {

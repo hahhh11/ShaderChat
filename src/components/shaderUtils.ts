@@ -88,6 +88,7 @@ export const setupUniforms = (
 					};
 				} else if (uniformType === "sampler2D") {
 					// sampler2D uniform 默认值为null
+					console.log(`sampler2D uniform ${name} 默认值为null`);
 					newCustomUniforms[name] = {
 						value: null,
 						type: "sampler2D",
@@ -100,6 +101,8 @@ export const setupUniforms = (
 				// 如果没有fragmentShader，默认为float
 				newCustomUniforms[name] = { value: 0.5 };
 			}
+
+			console.log("发现uniform新key");
 			hasChanges = true;
 		}
 		// 如果uniform已存在，保留现有的值和类型，但确保类型信息正确
@@ -133,6 +136,7 @@ export const setupUniforms = (
 							currentUniform.value instanceof HTMLImageElement ||
 							(typeof currentUniform.value === "object" && currentUniform.value !== null && "src" in currentUniform.value)
 						) {
+							console.log(`保留sampler2D类型的现有值，类型为: ${typeof currentUniform.value}`);
 							newCustomUniforms[name] = {
 								...currentUniform,
 								type: "sampler2D",
@@ -148,6 +152,8 @@ export const setupUniforms = (
 						newCustomUniforms[name] = { value: 0.5, type: "float" };
 					}
 				}
+
+				console.log("发现uniform新value");
 				hasChanges = true;
 			}
 			// 如果类型已经正确，不做任何修改

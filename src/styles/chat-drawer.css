@@ -1,0 +1,1759 @@
+/* 抽屉式对话框容器 - 现在相对于shader-canvas定位 */
+#chat-drawer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    overflow: visible;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateY(100%);
+    will-change: transform; /* 优化性能 */
+}
+
+/* 防止初始渲染时的闪烁 */
+#chat-drawer:not(.open) {
+    transform: translateY(100%) !important;
+    visibility: visible !important;
+}
+
+#chat-drawer.open {
+    transform: translateY(0);
+}
+
+/* 独立的切换按钮 - 现在相对于shader-canvas定位在右下角 */
+.chat-toggle-btn {
+    width: auto;
+    padding: 10px 16px;
+    background: rgba(0, 122, 204, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    z-index: 1002;
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 25px;
+    min-width: auto;
+    max-width: 200px;
+}
+  
+.chat-toggle-btn:hover {
+    background: rgba(0, 153, 255, 0.95);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(0, 122, 204, 0.5);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-2px);
+}
+
+.chat-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.chat-toggle-btn svg {
+    transition: transform 0.3s ease;
+    width: 14px;
+    height: 14px;
+}
+
+/* 模型选择器样式 */
+.model-selector {
+    padding: 6px 10px;
+    background: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    margin: 0;
+    width: auto;
+    display:flex;
+    flex-shrink: 0;
+    align-self: center;
+    margin-right: 10px;
+}
+
+.model-selector-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 8px;
+}
+
+.model-selector-label {
+    color: #ccc;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.model-selector-select {
+    background: rgba(40, 40, 40, 0.9);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 14px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.model-selector-select:hover {
+    border-color: rgba(255, 255, 255, 0.3);
+    background: rgba(50, 50, 50, 0.9);
+}
+
+.model-selector-select:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.3);
+}
+
+/* 配置模型选项的特殊样式 */
+.model-selector-select option[value="+ 配置模型"] {
+    color: #28a745;
+    font-weight: 600;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.model-selector-select option[value="+ 配置模型"]:hover {
+    background: rgba(40, 167, 69, 0.2);
+}
+
+/* 配置模型按钮样式 */
+.model-selector-config-btn {
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 122, 204, 0.3);
+}
+
+.model-selector-config-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 122, 204, 0.4);
+    background: linear-gradient(135deg, #0099ff 0%, #007acc 100%);
+}
+
+.model-selector-config-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 122, 204, 0.3);
+}
+
+.model-selector-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.model-selector-settings-btn {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    padding: 6px;
+    margin-left: 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.model-selector-settings-btn:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.model-selector-settings-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.model-selector-settings-btn:hover svg {
+    transform: rotate(30deg);
+}
+
+.model-status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.model-status-text {
+    color: #aaa;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* 对话框样式 - 半透明磨砂效果 */
+#chat-container {
+    height: 300px; /* 默认高度 */
+    background: rgba(37, 37, 38, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    z-index: 1001;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    margin: 0;
+    width: 100%;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 当抽屉打开时，让对话框铺满整个预览区域 */
+#chat-drawer.open #chat-container {
+    height: calc(100vh - 41px - 60px); /* 视口高度减去顶部栏和底部边距 */
+    max-height: calc(100vh - 41px - 60px);
+}
+
+/* 展开状态 - 图标旋转并按钮上移 */
+.chat-toggle-btn {
+    transform: rotate(0deg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 当抽屉打开时，移动按钮位置 */
+#chat-drawer.open + .chat-toggle-btn svg,
+.chat-toggle-btn.move-up svg {
+    transform: rotate(180deg);
+}
+
+#chat-drawer.open + .chat-toggle-btn,
+.chat-toggle-btn.move-up {
+    bottom: calc(100vh - 41px - 120px + 10px); /* 根据动态高度计算按钮位置 */
+}
+
+/* 消息区域 */
+#chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    font-size: 14px;
+    line-height: 1.5;
+    gap: 15px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* 聊天消息容器 */
+.chat-messages-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 消息容器 - 包含消息和设置按钮 */
+.chat-message-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    position: relative;
+    max-width: 85%;
+    margin-bottom: 15px;
+}
+
+.chat-message-container.user {
+    align-self: flex-end;
+}
+
+.chat-message-container.assistant {
+    align-self: flex-start;
+}
+
+/* 消息样式 */
+.chat-message {
+    flex: 1;
+    padding: 12px 18px;
+    border-radius: 12px;
+    margin-bottom: 0;
+    word-wrap: break-word;
+    animation: messageSlideIn 0.3s ease-out;
+}
+
+/* 消息滑入动画 */
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-message.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+    border-bottom-right-radius: 4px;
+}
+
+.chat-message.assistant {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.15);
+    color: #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border-bottom-left-radius: 4px;
+}
+
+/* 输入区域 */
+#chat-input-area {
+    padding: 15px 20px 20px;
+    background: rgba(30, 30, 30, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+/* 输入框容器 */
+.chat-input-container {
+    flex-grow: 1;
+    position: relative;
+}
+
+/* 可编辑div输入框样式 */
+.chat-input-div {
+    flex-grow: 1;
+    padding: 14px 18px;
+    background: rgba(51, 51, 51, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 45px;
+    max-height: 120px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.chat-input-div:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+    background: rgba(68, 68, 68, 0.9);
+}
+
+.chat-input-div:empty::before {
+    content: attr(data-placeholder);
+    color: #999;
+    font-size: 13px;
+    position: absolute;
+    pointer-events: none;
+}
+
+/* 着色器引用高亮样式 */
+.shader-ref {
+    background: linear-gradient(135deg, #007acc, #005a9e);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 12px;
+    margin: 0 2px;
+    display: inline-block;
+    vertical-align: middle;
+    box-shadow: 0 2px 4px rgba(0, 122, 204, 0.3);
+    transition: all 0.2s ease;
+}
+
+.shader-ref:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0, 122, 204, 0.4);
+}
+
+/* 原始textarea样式（保留作为备选） */
+#chat-input {
+    flex-grow: 1;
+    padding: 14px 18px;
+    background: rgba(51, 51, 51, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #fff;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: none;
+    min-height: 45px;
+    max-height: 120px;
+    outline: none;
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#chat-input:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.2);
+    background: rgba(68, 68, 68, 0.9);
+}
+
+#chat-input::placeholder {
+    color: #999;
+}
+
+/* 发送按钮 */
+#send-btn {
+    padding: 14px 22px;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+    align-self: flex-end;
+    min-width: 85px;
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#send-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.5);
+    background: linear-gradient(135deg, #0099ff 0%, #00b3ff 100%);
+}
+
+#send-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.4);
+}
+
+#send-btn:disabled {
+    background: rgba(85, 85, 85, 0.8);
+    color: #999;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 对话框滚动条 */
+#chat-messages::-webkit-scrollbar {
+    width: 8px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+    background: #1e1e1e;
+    border-radius: 4px;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+#chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* 消息设置按钮样式 - 跟随每个消息，风格与其他按钮保持一致 */
+.chat-message-settings-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(85, 85, 85, 0.9);
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.8);
+    font-family: inherit;
+}
+
+.chat-message-container:hover .chat-message-settings-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.chat-message-settings-btn:hover {
+    background: #3c3c3c;
+    border-color: #666;
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.chat-message-settings-btn:active {
+    transform: scale(0.95);
+}
+
+/* 消息操作按钮容器 */
+.chat-message-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+    margin-left: 8px;
+    margin-right: 8px;
+    align-items: center;
+    order: -1;
+}
+
+.chat-message-container.user .chat-message-actions {
+    margin-left: 8px;
+    margin-right: 0;
+}
+
+.chat-message-container.assistant .chat-message-actions {
+    margin-left: 0;
+    margin-right: 8px;
+    order: 0;
+}
+
+/* 复制按钮样式 */
+.chat-message-copy-btn {
+    width: 28px;
+    height: 28px;
+    background: rgba(85, 85, 85, 0.9);
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    flex-shrink: 0;
+    opacity: 0;
+    transform: scale(0.8);
+    font-family: inherit;
+}
+
+.chat-message-container:hover .chat-message-copy-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.chat-message-copy-btn:hover {
+    background: #3c3c3c;
+    border-color: #666;
+    color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.chat-message-copy-btn:active {
+    transform: scale(0.95);
+}
+
+/* 复制成功状态样式 */
+.chat-message-copy-btn.copied {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-color: #28a745;
+    color: #fff;
+    animation: copySuccess 0.5s ease;
+}
+
+@keyframes copySuccess {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.chat-message-copy-btn.copied svg {
+    animation: checkmark 0.4s ease-in-out;
+}
+
+@keyframes checkmark {
+    0% {
+        stroke-dasharray: 0 100;
+    }
+    100% {
+        stroke-dasharray: 100 0;
+    }
+}
+
+/* 应用按钮样式 */
+.chat-message-apply-btn {
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    border: 1px solid #007acc;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.3);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    min-width: 40px;
+    height: 24px;
+}
+
+.chat-message-apply-btn:hover {
+    background: linear-gradient(135deg, #0099ff 0%, #00b3ff 100%);
+    border-color: #0099ff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.4);
+}
+
+.chat-message-apply-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.3);
+}
+
+/* 旧设置按钮样式 - 已废弃 */
+.chat-settings-btn {
+    display: none;
+}
+
+/* 设置模态框样式 */
+.settings-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.settings-modal {
+    background: rgba(30, 30, 30, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 12px 48px rgba(0, 122, 204, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    position: relative;
+    margin: auto;
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.settings-modal-header {
+    padding: 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.1) 0%, rgba(0, 153, 255, 0.05) 100%);
+    position: relative;
+}
+
+.settings-modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 20px;
+    right: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #007acc 50%, transparent 100%);
+}
+
+.settings-modal-header h3 {
+    margin: 0;
+    color: #f0f0f0;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.8px;
+    text-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.3),
+        0 0 10px rgba(0, 122, 204, 0.3);
+    position: relative;
+    padding-left: 16px;
+}
+
+.settings-modal-header h3::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 24px;
+    background: linear-gradient(to bottom, #007acc, #0099ff);
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(0, 122, 204, 0.5);
+}
+
+.settings-modal-close {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.settings-modal-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.settings-modal-close:active {
+    transform: rotate(90deg) scale(0.95);
+}
+
+.settings-modal-content {
+    padding: 20px;
+    overflow-y: auto;
+    max-height: calc(80vh - 200px);
+}
+
+.setting-item {
+    margin-bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+}
+
+.setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.setting-item label {
+    font-size: 14px;
+    color: #e0e0e0;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    position: relative;
+    padding-left: 12px;
+}
+
+.setting-item label::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 16px;
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    border-radius: 2px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+.setting-item:hover label::before {
+    opacity: 1;
+}
+
+.setting-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #007acc;
+}
+
+.setting-item input[type="text"],
+.setting-item input[type="password"] {
+    padding: 12px 16px;
+    background: rgba(30, 30, 30, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #f0f0f0;
+    font-size: 14px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.setting-item input[type="text"]:hover,
+.setting-item input[type="password"]:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+}
+
+.setting-item input[type="text"]:focus,
+.setting-item input[type="password"]:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.3), 0 4px 16px rgba(0, 122, 204, 0.2);
+    transform: translateY(-2px);
+    background: rgba(40, 40, 40, 0.9);
+}
+
+.setting-item input[type="text"]::placeholder,
+.setting-item input[type="password"]::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    transition: color 0.3s ease;
+}
+
+.setting-item input[type="text"]:focus::placeholder,
+.setting-item input[type="password"]:focus::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.setting-item select {
+    padding: 12px 16px;
+    background: rgba(30, 30, 30, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: #f0f0f0;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    cursor: pointer;
+}
+
+.setting-item select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: translateY(-1px);
+}
+
+.setting-item select:focus {
+    border-color: #007acc;
+    box-shadow: 0 0 0 3px rgba(0, 122, 204, 0.3), 0 4px 16px rgba(0, 122, 204, 0.2);
+    transform: translateY(-2px);
+    background: rgba(40, 40, 40, 0.9);
+}
+
+.setting-item span {
+    font-size: 13px;
+    color: #999;
+    margin-left: 8px;
+}
+
+.settings-modal-footer {
+    padding: 20px 24px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    min-height: 60px;
+    align-items: center;
+}
+
+.settings-modal-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    text-align: center;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+}
+
+.settings-modal-btn-primary {
+    background: linear-gradient(135deg, #007acc 0%, #0099ff 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 122, 204, 0.4);
+}
+
+.settings-modal-btn-primary:hover {
+    background: linear-gradient(135deg, #0099ff 0%, #00b3ff 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(0, 122, 204, 0.5);
+}
+
+.settings-modal-btn-secondary {
+    background: rgba(85, 85, 85, 0.8);
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.settings-modal-btn-secondary:hover {
+    background: rgba(102, 102, 102, 0.9);
+    color: #fff;
+}
+
+/* 模型列表样式 */
+.model-list {
+    background: rgba(51, 51, 51, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 12px;
+    margin-bottom: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.model-list-empty {
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+    padding: 20px;
+}
+
+.model-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.3s ease;
+}
+
+.model-list-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.model-list-item:last-child {
+    margin-bottom: 0;
+}
+
+.model-info {
+    flex: 1;
+}
+
+.model-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 4px;
+}
+
+.model-details {
+    font-size: 12px;
+    color: #999;
+}
+
+/* 编辑按钮样式 */
+.model-edit-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 8px;
+    color: #999;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.7;
+}
+
+.model-edit-btn:hover {
+    background: rgba(0, 122, 204, 0.2);
+    border-color: rgba(0, 122, 204, 0.4);
+    color: #0099ff;
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+}
+
+.model-edit-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.15);
+}
+
+.model-list-item:hover .model-edit-btn {
+    opacity: 1;
+}
+
+/* 删除按钮样式 */
+.model-delete-btn {
+    background: rgba(255, 59, 48, 0.1);
+    border: 1px solid rgba(255, 59, 48, 0.2);
+    border-radius: 6px;
+    padding: 8px;
+    color: #ff3b30;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.7;
+}
+
+.model-delete-btn:hover {
+    background: rgba(255, 59, 48, 0.2);
+    border-color: rgba(255, 59, 48, 0.4);
+    color: #ff4539;
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 59, 48, 0.2);
+}
+
+.model-delete-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(255, 59, 48, 0.15);
+}
+
+.model-list-item:hover .model-delete-btn {
+    opacity: 1;
+}
+
+/* 测试按钮样式 */
+.model-test-btn {
+    background: rgba(0, 122, 204, 0.1);
+    border: 1px solid rgba(0, 122, 204, 0.2);
+    border-radius: 6px;
+    padding: 8px;
+    color: #0099ff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    opacity: 0.7;
+    min-width: 32px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.model-test-btn:hover {
+    background: rgba(0, 122, 204, 0.2);
+    border-color: rgba(0, 122, 204, 0.4);
+    color: #00b3ff;
+    opacity: 1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 122, 204, 0.2);
+}
+
+.model-test-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 122, 204, 0.15);
+}
+
+.model-test-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.model-test-btn[style*="#4CAF50"] {
+    background: rgba(76, 175, 80, 0.2) !important;
+    border-color: rgba(76, 175, 80, 0.4) !important;
+    color: #4CAF50 !important;
+}
+
+.model-test-btn[style*="#f44336"] {
+    background: rgba(244, 67, 54, 0.2) !important;
+    border-color: rgba(244, 67, 54, 0.4) !important;
+    color: #f44336 !important;
+}
+
+.model-list-item:hover .model-test-btn {
+    opacity: 1;
+}
+
+/* 添加模型模态框样式 */
+.add-model-modal {
+    background: rgba(30, 30, 30, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 12px 48px rgba(0, 122, 204, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    width: 90%;
+    max-width: 400px;
+    max-height: 80vh;
+    overflow: hidden;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    position: relative;
+    margin: auto;
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 添加模型内容区域样式 */
+.add-model-content {
+    padding: 32px 24px 24px;
+    background: linear-gradient(135deg, rgba(30, 30, 30, 0.7) 0%, rgba(40, 40, 40, 0.5) 100%);
+    position: relative;
+}
+
+.add-model-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #007acc 50%, transparent 100%);
+}
+
+/* 添加模型表单项样式 */
+.add-model-item {
+    margin-bottom: 28px;
+    position: relative;
+}
+
+.add-model-item:last-child {
+    margin-bottom: 0;
+}
+
+.add-model-item label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #b0b0b0;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-left: 0;
+}
+
+.add-model-item label::before {
+    display: none;
+}
+
+.add-model-item label svg {
+    width: 16px;
+    height: 16px;
+    stroke: #0099ff;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.add-model-item:hover label svg {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* 添加模型输入框样式 */
+.add-model-input {
+    padding: 14px 18px;
+    background: rgba(30, 30, 30, 0.9);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: #f0f0f0;
+    font-size: 15px;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    outline: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.add-model-input:hover {
+    border-color: rgba(0, 122, 204, 0.3);
+    box-shadow: 
+        0 6px 16px rgba(0, 0, 0, 0.3),
+        0 0 0 3px rgba(0, 122, 204, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transform: translateY(-1px);
+}
+
+.add-model-input:focus {
+    border-color: #007acc;
+    box-shadow: 
+        0 6px 20px rgba(0, 0, 0, 0.4),
+        0 0 0 4px rgba(0, 122, 204, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+    background: rgba(40, 40, 40, 0.95);
+}
+
+.add-model-input::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    transition: all 0.3s ease;
+}
+
+.add-model-input:focus::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    transform: translateX(4px);
+}
+
+/* 添加模型页脚样式 */
+.add-model-footer {
+    padding: 24px;
+    background: linear-gradient(135deg, rgba(25, 25, 25, 0.9) 0%, rgba(30, 30, 30, 0.8) 100%);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    min-height: 70px;
+    align-items: center;
+    position: relative;
+}
+
+.add-model-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 24px;
+    right: 24px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(0, 122, 204, 0.5) 50%, transparent 100%);
+}
+
+/* 添加模型提交按钮样式 */
+.add-model-submit {
+    background: linear-gradient(135deg, #00c6ff 0%, #0072ff 100%) !important;
+    box-shadow: 
+        0 4px 16px rgba(0, 114, 255, 0.4),
+        0 0 0 1px rgba(0, 114, 255, 0.2) !important;
+    position: relative;
+    overflow: hidden;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.8px !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.add-model-submit:hover {
+    background: linear-gradient(135deg, #0072ff 0%, #00c6ff 100%) !important;
+    box-shadow: 
+        0 6px 24px rgba(0, 114, 255, 0.6),
+        0 0 0 2px rgba(0, 114, 255, 0.3) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+}
+
+.add-model-submit:active {
+    transform: translateY(-1px) scale(0.98) !important;
+    box-shadow: 
+        0 3px 12px rgba(0, 114, 255, 0.4),
+        0 0 0 1px rgba(0, 114, 255, 0.2) !important;
+}
+
+.add-model-submit svg {
+    width: 16px;
+    height: 16px;
+    stroke: #fff;
+    stroke-width: 2.5px;
+    transition: all 0.3s ease;
+}
+
+.add-model-submit:hover svg {
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* 添加模型表单动画 */
+@keyframes inputGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 122, 204, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 122, 204, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 122, 204, 0);
+    }
+}
+
+.add-model-input:focus {
+    animation: inputGlow 1.5s ease-out;
+}
+
+/* 通知组件样式 */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(0, 122, 204, 0.1);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    padding: 16px 20px;
+    min-width: 300px;
+    max-width: 400px;
+    animation: notificationSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
+}
+
+.notification-success {
+    border-color: rgba(0, 200, 100, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(0, 200, 100, 0.2);
+}
+
+.notification-error {
+    border-color: rgba(255, 80, 80, 0.3);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 0 0 1px rgba(255, 80, 80, 0.2);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.notification-message {
+    color: #f0f0f0;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.notification-close {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #b0b0b0;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.notification-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    transform: scale(1.1);
+}
+
+.notification-close:active {
+    transform: scale(0.95);
+}
+
+@keyframes notificationSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) translateY(0);
+    }
+}
+
+.notification::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #007acc, #00c6ff, #007acc);
+    border-radius: 12px 12px 0 0;
+    opacity: 0.8;
+}
+
+.notification-success::before {
+    background: linear-gradient(90deg, #00c853, #00e676, #00c853);
+}
+
+.notification-error::before {
+    background: linear-gradient(90deg, #ff5252, #ff1744, #ff5252);
+}
+@keyframes inputGlow {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 122, 204, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(0, 122, 204, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 122, 204, 0);
+    }
+}
+
+.add-model-input:focus {
+    animation: inputGlow 1.5s ease-out;
+}
+
+/* 删除确认对话框样式 */
+.delete-confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+.delete-confirm-modal {
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        0 12px 48px rgba(0, 122, 204, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    width: 90%;
+    max-width: 380px;
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    animation: modalSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.delete-confirm-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.delete-confirm-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #e0e0e0;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.delete-confirm-close {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-confirm-close:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.delete-confirm-close:active {
+    transform: rotate(90deg) scale(0.95);
+}
+
+.delete-confirm-content {
+    padding: 24px;
+}
+
+.delete-confirm-content p {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+    color: #b0b0b0;
+    line-height: 1.5;
+}
+
+.delete-confirm-content p strong {
+    color: #e0e0e0;
+    font-weight: 600;
+}
+
+.delete-confirm-content .delete-warning {
+    color: #ff3b30;
+    font-size: 13px;
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.delete-confirm-footer {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    min-height: 60px;
+    align-items: center;
+}
+
+.delete-confirm-btn {
+    background: linear-gradient(135deg, #ff3b30 0%, #ff4539 100%) !important;
+    box-shadow: 0 2px 8px rgba(255, 59, 48, 0.4) !important;
+}
+
+.delete-confirm-btn:hover {
+    background: linear-gradient(135deg, #ff4539 0%, #ff5e53 100%) !important;
+    box-shadow: 0 3px 12px rgba(255, 59, 48, 0.5) !important;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 添加模型按钮样式 */
+.add-model-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.15) 0%, rgba(0, 153, 255, 0.1) 100%);
+    border: 2px dashed rgba(0, 122, 204, 0.4);
+    border-radius: 10px;
+    color: #0099ff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.add-model-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.8s ease;
+}
+
+.add-model-btn:hover {
+    background: linear-gradient(135deg, rgba(0, 122, 204, 0.25) 0%, rgba(0, 153, 255, 0.2) 100%);
+    border-color: rgba(0, 153, 255, 0.6);
+    color: #00b3ff;
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 24px rgba(0, 122, 204, 0.3),
+        0 0 20px rgba(0, 153, 255, 0.15);
+}
+
+.add-model-btn:hover::before {
+    left: 100%;
+}
+
+.add-model-btn:active {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(0, 122, 204, 0.2);
+}
+
+.add-model-btn svg {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.add-model-btn:hover svg {
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* 添加模型表单样式 */
+.add-model-form {
+    padding: 24px;
+    overflow-y: auto;
+    max-height: calc(80vh - 140px);
+}
+
+.add-model-form .setting-item {
+    margin-bottom: 20px;
+}
+
+.add-model-form .setting-item:last-child {
+    margin-bottom: 0;
+}
+
+.add-model-form .setting-item input[type="text"],
+.add-model-form .setting-item input[type="password"] {
+    background: rgba(20, 20, 20, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
+        0 1px 2px rgba(255, 255, 255, 0.05);
+}
+
+.add-model-form .setting-item input[type="text"]:hover,
+.add-model-form .setting-item input[type="password"]:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
+        0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.add-model-form .setting-item input[type="text"]:focus,
+.add-model-form .setting-item input[type="password"]:focus {
+    border-color: #007acc;
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.3),
+        0 0 0 3px rgba(0, 122, 204, 0.3),
+        0 6px 16px rgba(0, 122, 204, 0.3);
+    background: rgba(25, 25, 25, 0.9);
+    transform: translateY(-2px);
+}
+
+.add-model-form .setting-item label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #b0b0b0;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.add-model-form .setting-item input[type="text"]::placeholder,
+.add-model-form .setting-item input[type="password"]::placeholder {
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+    font-size: 14px;
+}
+
+.add-model-form .setting-item input[type="text"]:focus::placeholder,
+.add-model-form .setting-item input[type="password"]:focus::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
