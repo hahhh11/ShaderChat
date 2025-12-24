@@ -4,8 +4,8 @@ export interface UniformValue {
 		| { x: number; y: number; z?: number }
 		| { r: number; g: number; b: number }
 		| { r: number; g: number; b: number; a: number }
-		| HTMLImageElement
 		| ImageData
+		| { src: string; width?: number; height?: number } // 新的图片数据格式å
 		| null;
 	type?: "float" | "vec2" | "vec3" | "color" | "vec4" | "sampler2D";
 }
@@ -13,7 +13,7 @@ export interface UniformValue {
 export interface Uniforms {
 	[key: string]: UniformValue;
 	iTime: { value: number };
-	iResolution: { value: { x: number; y: number; z?: number } };
+	iResolution: { value: { x: number; y: number; z?: number }; type?: "vec2" | "vec3" };
 }
 
 export interface Message {

@@ -136,7 +136,7 @@
 }
 
 .uniform-control:hover label {
-    color: #007acc;
+    color: #fff;
 }
 
 /* 包含滑块和值的容器 */
@@ -456,6 +456,9 @@
     margin: 0;
     position: relative;
     overflow: hidden;
+    pointer-events: auto !important;
+    cursor: pointer;
+    z-index: 10;
 }
 
 .color-slider-group input[type="range"]::before {
@@ -470,10 +473,23 @@
     transition: none;
 }
 
-.color-slider-group:nth-child(1) input[type="range"]::before { background: linear-gradient(to right, #ff4444 0%, #ff6666 100%); }
-.color-slider-group:nth-child(2) input[type="range"]::before { background: linear-gradient(to right, #44ff44 0%, #66ff66 100%); }
-.color-slider-group:nth-child(3) input[type="range"]::before { background: linear-gradient(to right, #4444ff 0%, #6666ff 100%); }
-.color-slider-group:nth-child(4) input[type="range"]::before { background: linear-gradient(to right, #cccccc 0%, #ffffff 100%); }
+/* 使用更具体的选择器避免多个ColorPicker实例间的冲突 */
+.color-picker-container .color-slider-group:nth-child(1) input[type="range"]::before { background: linear-gradient(to right, #ff4444 0%, #ff6666 100%); }
+.color-picker-container .color-slider-group:nth-child(2) input[type="range"]::before { background: linear-gradient(to right, #44ff44 0%, #66ff66 100%); }
+.color-picker-container .color-slider-group:nth-child(3) input[type="range"]::before { background: linear-gradient(to right, #4444ff 0%, #6666ff 100%); }
+.color-picker-container .color-slider-group:nth-child(4) input[type="range"]::before { background: linear-gradient(to right, #cccccc 0%, #ffffff 100%); }
+
+/* 确保滑动条可以正常交互 */
+.color-picker-container input[type="range"] {
+    pointer-events: auto !important;
+    cursor: grab;
+    position: relative;
+    z-index: 100;
+}
+
+.color-picker-container input[type="range"]:active {
+    cursor: grabbing;
+}
 
 .color-slider-group input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;

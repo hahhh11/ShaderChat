@@ -1,4 +1,5 @@
 import { Uniforms } from "./types";
+import * as THREE from "three";
 
 export const getUniformType = (fsSource: string, uniformName: string): "float" | "vec3" | "vec4" | "sampler2D" => {
 	const floatRegex = new RegExp(`uniform\\s+float\\s+${uniformName};`);
@@ -182,6 +183,14 @@ export const setupUniforms = (
 		if (uniforms.iTime) mergedUniforms.iTime = uniforms.iTime;
 		if (uniforms.iResolution) mergedUniforms.iResolution = uniforms.iResolution;
 
+		// 对于sampler2D类型，如果uniforms中已经有THREE.Texture，则保留它
+		Object.keys(newCustomUniforms).forEach((key) => {
+			const newUniform = newCustomUniforms[key];
+			if (newUniform.type === "sampler2D" && uniforms[key] && uniforms[key].value instanceof THREE.Texture) {
+				mergedUniforms[key] = uniforms[key];
+			}
+		});
+
 		setUniforms(mergedUniforms);
 	}
 };
@@ -219,6 +228,11 @@ export const areUniformValuesEqual = (a: any, b: any): boolean => {
 
 	// 处理HTMLImageElement（图片）
 	if (a instanceof HTMLImageElement && b instanceof HTMLImageElement) {
+		return a.src === b.src;
+	}
+
+	// 处理新的图片数据格式（有src属性的对象）
+	if (typeof a === "object" && a !== null && "src" in a && typeof b === "object" && b !== null && "src" in b) {
 		return a.src === b.src;
 	}
 

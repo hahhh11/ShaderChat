@@ -755,6 +755,7 @@ body.resizing * {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: float 3s ease-in-out infinite;
     min-height: 140px;
+    pointer-events: auto;
 }
 
 .color-picker-container:hover {

@@ -15,12 +15,17 @@ import {
   setupUniforms,
   areUniformValuesEqual,
   useModels,
-  ColorPicker
+  ColorPicker,
+  ShaderHistoryModal,
+  ShaderHistory
 } from './components';
+import { UniformValue } from './components/types';
 import { debounce } from './utils/debounce';
 import './App.css';
 import './styles/uniform-controls.css'
 import './styles/chat-drawer.css'
+import './styles/shader-history.css'
+import './styles/fontawesome.min.css';
 
 // 自定义CSS属性类型声明
 declare module 'react' {
@@ -39,10 +44,12 @@ function App() {
   // 状态管理 - 默认使用纹理采样模板
   const [vertexShader, setVertexShader] = useState<string>(defaultVertexShader);
   const [fragmentShader, setFragmentShader] = useState<string>(sampler2DFragmentShader);
+  // 传入ShaderMaterial的uniforms
   const [uniforms, setUniforms] = useState<Uniforms>({
     iTime: { value: 0.0 },
-    iResolution: { value: { x: 1, y: 1 } }
+    iResolution: { value: { x: 1, y: 1 }, type: 'vec2' }
   });
+  // 用户编辑的uniforms
   const [customUniforms, setCustomUniforms] = useState<Uniforms>({} as Uniforms);
   const [isChatOpen, setIsChatOpen] = useState<boolean>(false);
   const [messages, setMessages] = useState<Message[]>([
@@ -55,6 +62,27 @@ function App() {
   // 确保ChatDrawer默认关闭
   useEffect(() => {
     setIsChatOpen(false);
+  }, []);
+
+  // 从localStorage加载历史记录
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('shaderHistory');
+    if (savedHistory) {
+      try {
+        setShaderHistory(JSON.parse(savedHistory));
+      } catch (error) {
+        console.error('加载历史记录失败:', error);
+      }
+    }
+  }, []);
+
+  // 保存历史记录到localStorage
+  const saveHistoryToStorage = useCallback((history: ShaderHistory[]) => {
+    try {
+      localStorage.setItem('shaderHistory', JSON.stringify(history));
+    } catch (error) {
+      console.error('保存历史记录失败:', error);
+    }
   }, []);
 
   // 组件挂载时自动加载纹理采样模板
@@ -71,6 +99,10 @@ function App() {
   
   // 形状切换状态
   const [currentShape, setCurrentShape] = useState<'plane' | 'cube' | 'sphere'>('plane');
+  
+  // 历史记录状态
+  const [shaderHistory, setShaderHistory] = useState<ShaderHistory[]>([]);
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
   
   // 画布尺寸引用
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -255,7 +287,7 @@ function App() {
     if (fragmentShader) {
       debouncedUniformUpdate(fragmentShader);
     }
-  }, [fragmentShader, debouncedUniformUpdate]);
+  }, [fragmentShader, customUniforms, debouncedUniformUpdate]);
   
   // 在CodeEditor组件中使用
   const handleFragmentShaderChangeWrapper = (newFragmentShader: string) => {
@@ -282,11 +314,13 @@ function App() {
   
   // 更新Uniform值 - 优化性能，避免重复设置相同值
   const updateUniformValue = useCallback((name: string, value: number): void => {
+    console.log('updateUniformValue',name,value);
+    console.log(uniforms);
     setCustomUniforms(prev => {
       const currentValue = prev[name]?.value;
       const currentType = prev[name]?.type;
       // 使用精确的值比较，只在值真正变化时更新
-      if (areUniformValuesEqual(currentValue, value)) return prev;
+      // if (areUniformValuesEqual(currentValue, value)) return prev;
       const newUniforms = { ...prev };
       newUniforms[name] = { value, type: currentType || 'float' };
       return newUniforms;
@@ -296,7 +330,7 @@ function App() {
       const currentValue = prev[name]?.value;
       const currentType = prev[name]?.type;
       // 使用精确的值比较，只在值真正变化时更新
-      if (areUniformValuesEqual(currentValue, value)) return prev;
+      // if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
         [name]: { value, type: currentType || 'float' }
@@ -306,80 +340,129 @@ function App() {
 
   // 更新vec3 Uniform值 - 优化性能，避免重复设置相同值
   const updateVec3UniformValue = useCallback((name: string, value: { r: number; g: number; b: number }): void => {
+    console.log('updateVec3UniformValue',name,value);
+    
+    // 验证输入值的有效性
+    if (!value || typeof value.r !== 'number' || typeof value.g !== 'number' || typeof value.b !== 'number') {
+      console.error(`updateVec3UniformValue: Invalid value for ${name}:`, value);
+      return;
+    }
+    
+    // 确保值在有效范围内
+    const validatedValue = {
+      r: Math.max(0, Math.min(1, value.r)),
+      g: Math.max(0, Math.min(1, value.g)),
+      b: Math.max(0, Math.min(1, value.b))
+    };
+    
+    console.log(`updateVec3UniformValue: Setting ${name} to [${validatedValue.r}, ${validatedValue.g}, ${validatedValue.b}]`);
+    
     setCustomUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number } | null | undefined;
-      // 使用精确的值比较，只在值真正变化时更新
-      if (areUniformValuesEqual(currentValue, value)) return prev;
-      return {
+      const newState = {
         ...prev,
-        [name]: { value, type: 'vec3' }
+        [name]: { value: validatedValue, type: 'vec3' } as UniformValue
       };
+      console.log(`updateVec3UniformValue: customUniforms before update:`, prev);
+      console.log(`updateVec3UniformValue: customUniforms after update:`, newState);
+      return newState;
     });
     
     setUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number } | null | undefined;
-      // 使用精确的值比较，只在值真正变化时更新
-      if (areUniformValuesEqual(currentValue, value)) return prev;
-      return {
+      const newState = {
         ...prev,
-        [name]: { value, type: 'vec3' }
+        [name]: { value: validatedValue, type: 'vec3' } as UniformValue
       };
+      console.log(`updateVec3UniformValue: uniforms before update:`, prev);
+      console.log(`updateVec3UniformValue: uniforms after update:`, newState);
+      return newState;
     });
   }, []);
 
   // 更新vec4 Uniform值 - 优化性能，避免重复设置相同值
   const updateVec4UniformValue = useCallback((name: string, value: { r: number; g: number; b: number; a: number }): void => {
+    console.log('updateVec4UniformValue',name,value);
+    
+    // 验证输入值的有效性
+    if (!value || typeof value.r !== 'number' || typeof value.g !== 'number' || typeof value.b !== 'number' || typeof value.a !== 'number') {
+      console.error(`updateVec4UniformValue: Invalid value for ${name}:`, value);
+      return;
+    }
+    
+    // 确保值在有效范围内
+    const validatedValue = {
+      r: Math.max(0, Math.min(1, value.r)),
+      g: Math.max(0, Math.min(1, value.g)),
+      b: Math.max(0, Math.min(1, value.b)),
+      a: Math.max(0, Math.min(1, value.a))
+    };
+    
+    console.log(`updateVec4UniformValue: Setting ${name} to [${validatedValue.r}, ${validatedValue.g}, ${validatedValue.b}, ${validatedValue.a}]`);
+    
     setCustomUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number } | null | undefined;
-      // 使用精确的值比较，只在值真正变化时更新
-      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
-        [name]: { value, type: 'vec4' }
+        [name]: { value: validatedValue, type: 'vec4' }
       };
     });
     
     setUniforms(prev => {
-      const currentValue = prev[name]?.value as { r: number; g: number; b: number; a: number } | null | undefined;
-      // 使用精确的值比较，只在值真正变化时更新
-      if (areUniformValuesEqual(currentValue, value)) return prev;
       return {
         ...prev,
-        [name]: { value, type: 'vec4' }
+        [name]: { value: validatedValue, type: 'vec4' }
       };
     });
   }, []);
 
-  // 处理图片上传
+  // 处理图片上传 - 优化为直接存储base64数据
   const [isDragOver, setIsDragOver] = useState(false);
 
   const handleImageUpload = useCallback((name: string, file: File): void => {
     const reader = new FileReader();
     reader.onload = (e) => {
+      const base64Data = e.target?.result as string;
+      
+      // 创建Image对象用于验证图片有效性
       const img = new Image();
       img.onload = () => {
+        // 存储base64数据而不是HTMLImageElement，更轻量且易于序列化
+        const imageData = {
+          src: base64Data,
+          width: img.naturalWidth,
+          height: img.naturalHeight
+        };
+        
         setCustomUniforms(prev => {
           const currentValue = prev[name]?.value;
           // 使用精确的值比较，只在值真正变化时更新
-          if (areUniformValuesEqual(currentValue, img)) return prev;
+          if (areUniformValuesEqual(currentValue, imageData)) return prev;
           return {
             ...prev,
-            [name]: { value: img, type: 'sampler2D' }
+            [name]: { value: imageData, type: 'sampler2D' }
           };
         });
         
         setUniforms(prev => {
           const currentValue = prev[name]?.value;
           // 使用精确的值比较，只在值真正变化时更新
-          if (areUniformValuesEqual(currentValue, img)) return prev;
+          if (areUniformValuesEqual(currentValue, imageData)) return prev;
           return {
             ...prev,
-            [name]: { value: img, type: 'sampler2D' }
+            [name]: { value: imageData, type: 'sampler2D' }
           };
         });
       };
-      img.src = e.target?.result as string;
+      
+      img.onerror = () => {
+        console.error('图片加载失败:', file.name);
+      };
+      
+      img.src = base64Data;
     };
+    
+    reader.onerror = () => {
+      console.error('文件读取失败:', file.name);
+    };
+    
     reader.readAsDataURL(file);
   }, []);
 
@@ -660,6 +743,48 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
     }
   };
   
+  // 保存当前shader到历史记录
+  const handleSaveCurrentShader = useCallback((name: string) => {
+    const newHistory: ShaderHistory = {
+      id: Date.now().toString(),
+      name,
+      vertexShader,
+      fragmentShader,
+      uniforms,
+      customUniforms,
+      timestamp: Date.now()
+    };
+    
+    const updatedHistory = [...shaderHistory, newHistory];
+    setShaderHistory(updatedHistory);
+    saveHistoryToStorage(updatedHistory);
+  }, [vertexShader, fragmentShader, uniforms, customUniforms, shaderHistory, saveHistoryToStorage]);
+
+  // 加载历史记录
+  const handleLoadHistory = useCallback((history: ShaderHistory) => {
+    setVertexShader(history.vertexShader);
+    setFragmentShader(history.fragmentShader);
+    setUniforms(history.uniforms);
+    setCustomUniforms(history.customUniforms);
+    setIsHistoryPanelOpen(false);
+  }, []);
+
+  // 删除历史记录
+  const handleDeleteHistory = useCallback((id: string) => {
+    const updatedHistory = shaderHistory.filter(item => item.id !== id);
+    setShaderHistory(updatedHistory);
+    saveHistoryToStorage(updatedHistory);
+  }, [shaderHistory, saveHistoryToStorage]);
+
+  // 重命名历史记录
+  const handleRenameHistory = useCallback((id: string, newName: string) => {
+    const updatedHistory = shaderHistory.map(item => 
+      item.id === id ? { ...item, name: newName } : item
+    );
+    setShaderHistory(updatedHistory);
+    saveHistoryToStorage(updatedHistory);
+  }, [shaderHistory, saveHistoryToStorage]);
+
   // 折叠按钮处理
   const toggleVsCollapse = () => {
     setIsVsCollapsed(!isVsCollapsed);
@@ -738,7 +863,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
   
   return (
     <div id="main-container">
-      <NavigationBar />
+      <NavigationBar onHistoryClick={() => setIsHistoryPanelOpen(true)} />
       <div id="app-container">
         {/* 左侧编辑器面板 */}
         <div 
@@ -776,7 +901,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
             <CodeEditor 
               id="fs-editor" 
               defaultValue={fragmentShader} 
-              onChange={handleFragmentShaderChangeWrapper} 
+              onChange={handleFragmentShaderChangeWrapper}
             />
             
             {/* AI建议的应用按钮 */}
@@ -864,6 +989,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
                   uniforms={uniforms} 
                   vertexShader={vertexShader} 
                   fragmentShader={fragmentShader} 
+                  transparent={true}
                   shape={currentShape}
                 />
               </Canvas>
@@ -896,7 +1022,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
               const uniform = customUniforms[name];
               const isVec3 = uniform.type === 'vec3' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && !('a' in uniform.value));
               const isVec4 = uniform.type === 'vec4' || (uniform.value && typeof uniform.value === 'object' && 'r' in uniform.value && 'a' in uniform.value);
-              const isSampler2D = uniform.type === 'sampler2D' || uniform.value instanceof HTMLImageElement;
+              const isSampler2D = uniform.type === 'sampler2D' || uniform.value instanceof HTMLImageElement || (uniform.value && typeof uniform.value === 'object' && 'src' in uniform.value);
               if (isSampler2D) {
                 return (
                   <div key={name} className="uniform-control sampler2d-control">
@@ -910,7 +1036,7 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
                       {uniform.value ? (
                         <div className="image-preview has-image">
                           <img 
-                            src={(uniform.value as HTMLImageElement).src} 
+                            src={typeof uniform.value === 'object' && 'src' in uniform.value ? (uniform.value as { src: string }).src : (uniform.value as HTMLImageElement).src} 
                             alt={name}
                             width="120"
                             height="120"
@@ -957,20 +1083,56 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
                   </div>
                 );
               }
-              
               if (isVec3 || isVec4) {
                 return (
+                  
                   <div key={name} className={`uniform-control ${isVec4 ? 'vec4-control' : 'vec3-control'}`}>
                     <label>{name}</label>
                     <ColorPicker
-                      color={isVec3 ? 
-                        { r: (uniform.value as { r: number; g: number; b: number })?.r || 0, g: (uniform.value as { r: number; g: number; b: number })?.g || 0, b: (uniform.value as { r: number; g: number; b: number })?.b || 0 } :
-                        (uniform.value as { r: number; g: number; b: number; a: number }) || { r: 0, g: 0, b: 0, a: 1 }
-                      }
-                      onChange={(color) => isVec3 ? 
-                        updateVec3UniformValue(name, { r: color.r, g: color.g, b: color.b }) :
-                        updateVec4UniformValue(name, color as { r: number; g: number; b: number; a: number })
-                      }
+                      color={(() => {
+                        console.log(`App: Rendering ColorPicker for ${name}, uniform.value:`, uniform.value);
+                        
+                        if (isVec3) {
+                          const vec3Value = uniform.value as { r?: number; g?: number; b?: number; x?: number; y?: number; z?: number };
+                          // 处理Vector3格式 (x,y,z) 或 RGB格式 (r,g,b)
+                          if (vec3Value) {
+                            if (typeof vec3Value.x === 'number' && typeof vec3Value.y === 'number' && typeof vec3Value.z === 'number') {
+                              console.log(`App: Converting Vector3 format for ${name}:`, vec3Value);
+                              return { r: vec3Value.x, g: vec3Value.y, b: vec3Value.z };
+                            } else if (typeof vec3Value.r === 'number' && typeof vec3Value.g === 'number' && typeof vec3Value.b === 'number') {
+                              console.log(`App: Using RGB format for ${name}:`, vec3Value);
+                              return { r: vec3Value.r, g: vec3Value.g, b: vec3Value.b };
+                            }
+                          }
+                          console.log(`App: Using default color for ${name}`);
+                          return { r: 1, g: 1, b: 1 };
+                        } else {
+                          const vec4Value = uniform.value as { r: number; g: number; b: number; a: number };
+                          console.log(`App: Using vec4 format for ${name}:`, vec4Value);
+                          return vec4Value || { r: 1, g: 1, b: 1, a: 1 };
+                        }
+                      })()}
+                      onChange={(color) => {
+                        // 直接使用正确的颜色格式，不需要复杂的转换逻辑
+                        console.log(`App ColorPicker onChange - name: ${name}, color:`, color);
+                        console.log(`App ColorPicker onChange - color.r: ${color?.r}, color.g: ${color?.g}, color.b: ${color?.b}${!isVec3 ? ', color.a: ' + color?.a : ''}`);
+                        
+                        if (isVec3) {
+                          const vec3Color = color as { r: number; g: number; b: number };
+                          if (vec3Color && typeof vec3Color.r === 'number' && typeof vec3Color.g === 'number' && typeof vec3Color.b === 'number') {
+                            updateVec3UniformValue(name, vec3Color);
+                          } else {
+                            console.error(`App ColorPicker onChange - Invalid vec3 color for ${name}:`, vec3Color);
+                          }
+                        } else {
+                          const vec4Color = color as { r: number; g: number; b: number; a: number };
+                          if (vec4Color && typeof vec4Color.r === 'number' && typeof vec4Color.g === 'number' && typeof vec4Color.b === 'number' && typeof vec4Color.a === 'number') {
+                            updateVec4UniformValue(name, vec4Color);
+                          } else {
+                            console.error(`App ColorPicker onChange - Invalid vec4 color for ${name}:`, vec4Color);
+                          }
+                        }
+                      }}
                       label={name}
                       showAlpha={!isVec3}
                     />
@@ -999,8 +1161,17 @@ ${parsed.changes.map(change => `- ${change}`).join('\n')}
           </div>
         </div>
       </div>
-      
 
+      {/* 历史记录面板 */}
+      <ShaderHistoryModal
+        isOpen={isHistoryPanelOpen}
+        onClose={() => setIsHistoryPanelOpen(false)}
+        history={shaderHistory}
+        onLoadHistory={handleLoadHistory}
+        onDeleteHistory={handleDeleteHistory}
+        onRenameHistory={handleRenameHistory}
+        onSaveCurrent={handleSaveCurrentShader}
+      />
     </div>
   );
 }

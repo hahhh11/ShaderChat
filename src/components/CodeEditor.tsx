@@ -2,8 +2,8 @@
  * @Author: 98Precent
  * @Date: 2025-12-08 16:31:00
  * @LastEditors: Do not edit
- * @LastEditTime: 2025-12-08 16:43:08
- * @FilePath: /shadertoy/src/components/CodeEditor.tsx
+ * @LastEditTime: 2025-12-24 11:17:03
+ * @FilePath: /ShaderChat/src/components/CodeEditor.tsx
  */
 import React, { useEffect, useRef } from 'react';
 //@ts-ignore
@@ -66,6 +66,8 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ id, defaultValue, onChange }) =
           onChange(editorRef.current.getValue());
         }
       });
+      
+      // 注意：移除了onBlur和onKeyDown事件，让防抖机制统一处理更新
       
       // 设置编辑器选项
       editor.setOptions({
