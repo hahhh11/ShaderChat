@@ -2,6 +2,9 @@
 
 一个基于WebGL的交互式着色器编辑器，支持实时代码编辑、预览和AI辅助编程。
 
+## 示例视频
+<video src="https://github.com/user-attachments/assets/24f36537-adc6-4ccd-b358-faaeb08a4b43" controls></video>
+
 ## ✨ 主要功能
 
 ### 🎯 核心特性
@@ -66,11 +69,11 @@ pnpm build
 ## TODO
 
 - [x] 直接应用大模型返回的shader代码
+- [x] 历史对话记录及shader代码保存
 - [ ] 完善unifroms类型及取值
 - [ ] 提示当前uniforms的取值
 - [ ] 当前shader性能显示
 - [ ] diff大模型返回和现有shader的差异
-- [ ] 历史对话记录及shader代码保存
 
 ## 🤝 贡献指南
 
